@@ -6,7 +6,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh flex flex-col bg-bg pb-28">
+    <div className="min-h-dvh flex flex-col bg-bg pb-32">
       {children}
       <BottomNav />
     </div>
