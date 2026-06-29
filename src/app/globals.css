@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-ink: #1a0a14;
+  --color-ink-soft: #27171b;
+  --color-bg: #fff0f5;
+  --color-surface: #ffffff;
+  --color-surface-2: #fff8fa;
+
+  --color-primary: #ff3d8a;
+  --color-primary-strong: #d11c63;
+  --color-primary-foreground: #1a0a14;
+
+  --color-pink-soft: #ffd1e3;
+  --color-pink-cream: #ffe4ec;
+  --color-pink-tint: #fff0f2;
+
+  --color-accent-yellow: #ffd66b;
+  --color-accent-mint: #9ae6c4;
+  --color-accent-peach: #ffb088;
+
+  --color-period: #e11d48;
+  --color-prediction: #ff8fb6;
+
+  --color-text-muted: #6b3a4c;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+
+  --radius-retro-sm: 6px;
+  --radius-retro: 8px;
+  --radius-retro-lg: 12px;
+
+  --shadow-retro-sm: 2px 2px 0 0 var(--color-ink);
+  --shadow-retro: 4px 4px 0 0 var(--color-ink);
+  --shadow-retro-lg: 6px 6px 0 0 var(--color-ink);
+  --shadow-retro-focus: 4px 4px 0 0 var(--color-primary);
+
+  --font-display: var(--font-archivo), "Archivo Narrow", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-retro-focus);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility shadow-retro-sm {
+  box-shadow: 2px 2px 0 0 var(--color-ink);
+}
+@utility shadow-retro {
+  box-shadow: 4px 4px 0 0 var(--color-ink);
+}
+@utility shadow-retro-lg {
+  box-shadow: 6px 6px 0 0 var(--color-ink);
+}
+
+@utility press-retro {
+  transition: transform 80ms ease, box-shadow 80ms ease;
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 0 var(--color-ink);
+  }
+  &:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 0 var(--color-ink);
+  }
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
