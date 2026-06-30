@@ -59,7 +59,7 @@ export default function TtdPage() {
           </div>
           <div className="text-right">
             <Link
-              href="/profil/pengaturan"
+              href="/profil/notifikasi"
               className="font-mono text-[10px] font-bold text-primary-strong hover:underline uppercase inline-flex items-center gap-1 tracking-wider"
             >
               Ubah jadwal <ArrowRight className="size-3.5" strokeWidth={2.75} />

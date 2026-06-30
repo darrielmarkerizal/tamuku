@@ -72,7 +72,7 @@ export default function ProfilPage() {
           PROFIL
         </h1>
         <Link
-          href="/profil/pengaturan"
+          href="/profil/edit"
           aria-label="Pengaturan"
           className="size-10 flex items-center justify-center rounded-full border-2 border-transparent hover:border-ink hover:bg-pink-cream transition-all text-text-muted"
         >
