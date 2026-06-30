@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,23 +7,32 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
 enum TtdStatus {
-  WEEKLY_ROUTINE
-  MENSTRUATION_ROUTINE
-  STOCK_ADDED
+  WEEKLY_ROUTINE       // minum TTD di hari biasa (sekali seminggu)
+  MENSTRUATION_ROUTINE // minum TTD saat haid (setiap hari)
+  STOCK_ADDED          // penambahan stok pil
 }
 
+// ─── Models ──────────────────────────────────────────────────────────────────
+
 model User {
-  id               String            @id @default(uuid()) @db.Uuid
-  name             String?
-  username         String            @unique
-  password         String
-  inventory_ttd    Int               @default(0)
-  badges           String[]          @default([])
-  menstruationLogs MenstruationLog[]
-  ttdLogs          TtdLog[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id                   String               @id @default(uuid()) @db.Uuid
+  name                 String?
+  username             String               @unique
+  password             String
+  school               String?              // dari form register, opsional
+  class_name           String?              // dari form register, opsional
+  inventory_ttd        Int                  @default(0)
+  badges               String[]             @default([])
+  onboarding_completed Boolean              @default(false)
+  menstruationLogs     MenstruationLog[]
+  ttdLogs              TtdLog[]
+  journalLogs          JournalLog[]
+  notificationSetting  NotificationSetting?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 }
 
 model MenstruationLog {
@@ -37,16 +41,48 @@ model MenstruationLog {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   start_date   DateTime
   end_date     DateTime?
-  cycle_length Int?
+  cycle_length Int?      // dikalkulasi otomatis saat siklus baru dimulai
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
 
+// log_date dipakai untuk semua status: konsumsi TTD & penambahan stok
 model TtdLog {
-  id            String    @id @default(uuid()) @db.Uuid
-  userId        String    @db.Uuid
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  consumed_date DateTime
-  status        TtdStatus
-  createdAt     DateTime  @default(now())
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  log_date  DateTime
+  status    TtdStatus
+  quantity  Int       @default(1) // jumlah pil (STOCK_ADDED bisa > 1)
+  createdAt DateTime  @default(now())
+}
+
+// Satu entri per user per tanggal — upsert berdasarkan userId + log_date di app layer
+model JournalLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  log_date  DateTime
+  mood      String?  // nilai: happy | calm | sad | angry | tired | anxious
+  symptoms  String[] @default([]) // pilihan: Kram, Sakit kepala, Kembung, Jerawat, Lemas, Sakit pinggang
+  notes     String?  // max 280 karakter, divalidasi di app layer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Satu setting per user (one-to-one)
+model NotificationSetting {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @unique @db.Uuid
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enabled           Boolean  @default(true)
+  reminder_hour     Int      @default(7)
+  reminder_minute   Int      @default(0)
+  days_of_week      String[] @default(["sen", "sel", "rab", "kam", "jum", "sab", "min"])
+  ttd_daily         Boolean  @default(true)
+  ttd_weekly        Boolean  @default(true)
+  period_start      Boolean  @default(true)
+  period_prediction Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
