@@ -5,7 +5,7 @@
 - **Bahasa:** TypeScript strict.
 - **Styling:** Tailwind CSS v4.
 - **UI Component:** shadcn/ui (di-add per komponen, hindari over-fetching).
-- **Database:** MongoDB Atlas + Mongoose.
+- **Database:** PostgreSQL + Prisma ORM.
 - **Auth:** Auth.js (NextAuth v5) — credentials provider, username + password sederhana. Single-user app, tidak ada role.
 - **Local Store:** Dexie.js di atas IndexedDB.
 - **PWA:** `next-pwa` atau Workbox custom service worker.
@@ -36,7 +36,7 @@ src/
     api/
   components/   # shadcn + custom
   lib/
-    db/         # mongoose models
+    db/         # prisma instance
     sma/        # mesin prediksi (pure functions, mudah ditest)
     ttd/        # logika dynamic reminder
     sync/       # offline → online
@@ -45,6 +45,6 @@ src/
   styles/
 ```
 
-## Keputusan yang Dibatalkan dari Plan Awal
-- **Prisma** tidak dipakai → MongoDB lebih natural dengan Mongoose; Prisma+Mongo masih preview.
+## Revisi Keputusan Tech Stack
+- **Database:** Awalnya direncanakan menggunakan MongoDB, namun direvisi menjadi **PostgreSQL** dengan **Prisma ORM** untuk integritas relasional yang lebih baik dan ekosistem tooling yang lebih stabil (Prisma dengan Postgres sangat mature).
 - **Server Actions ATAU Route Handlers** — pilih **Server Actions** sebagai default, Route Handlers hanya untuk endpoint yang dipanggil service worker (sync) dan webhook cron.

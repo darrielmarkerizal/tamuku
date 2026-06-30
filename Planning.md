@@ -60,28 +60,28 @@ Sistem dibangun menggunakan arsitektur modern berbasisi _JavaScript/TypeScript E
 
 ---
 
-## 5. Struktur Database Ringkas (MongoDB Collections)
+## 5. Struktur Database Ringkas (PostgreSQL Relational)
 
-Menggunakan pendekatan _NoSQL_ dengan MongoDB, skema dirancang agar pengambilan data cepat dengan memanfaatkan _embedding_ (dokumen bersarang) di mana hal itu relevan, sambil tetap memisahkan log untuk mempermudah perhitungan analitik.
+Menggunakan pendekatan relasional (SQL) dengan PostgreSQL dan Prisma ORM. Skema dirancang untuk menjaga integritas data antar pengguna dan log (referential integrity) agar pelaporan dan _query_ analitik menjadi lebih akurat.
 
-1. **Collection `users`**
-   - `_id` (ObjectId)
-   - `name`, `email`, `password` (atau auth provider)
+1. **Table `users`**
+   - `id` (UUID, Primary Key)
+   - `name`, `username`, `password`
    - `inventory_ttd` (Int) - Menyimpan sisa pil yang dimiliki.
-   - `badges` (Array of Strings) - Pencapaian _badge_ disematkan langsung untuk pembacaan profil yang cepat.
+   - `badges` (JSON/String array) - Pencapaian _badge_ (bisa juga tabel terpisah, tapi JSON array lebih praktis untuk pembacaan profil yang cepat).
 
-2. **Collection `menstruation_logs`**
-   - `_id` (ObjectId)
-   - `userId` (ObjectId, ref: 'users')
-   - `start_date` (Date)
-   - `end_date` (Date, nullable)
+2. **Table `menstruation_logs`**
+   - `id` (UUID, Primary Key)
+   - `userId` (UUID, Foreign Key ke `users`)
+   - `start_date` (DateTime)
+   - `end_date` (DateTime, nullable)
    - `cycle_length` (Int) - Dikalkulasi otomatis saat siklus baru dicatat untuk keperluan SMA.
 
-3. **Collection `ttd_logs`**
-   - `_id` (ObjectId)
-   - `userId` (ObjectId, ref: 'users')
-   - `consumed_date` (Date)
-   - `status` (String, enum: 'weekly_routine', 'menstruation_routine')
+3. **Table `ttd_logs`**
+   - `id` (UUID, Primary Key)
+   - `userId` (UUID, Foreign Key ke `users`)
+   - `consumed_date` (DateTime)
+   - `status` (Enum/String: 'weekly_routine', 'menstruation_routine', 'stock_added')
 
 ---
 
@@ -90,7 +90,7 @@ Menggunakan pendekatan _NoSQL_ dengan MongoDB, skema dirancang agar pengambilan 
 - **Fase 1 (Minggu 1-2): Setup & Kerangka Dasar**
   - Inisialisasi proyek Next.js dengan TypeScript dan Tailwind CSS.
   - Konfigurasi PWA _manifest_ dan _service worker_.
-  - Pembuatan klaster MongoDB (misal: MongoDB Atlas) dan setup Mongoose/Prisma ORM.
+  - Setup PostgreSQL Database (misal: Supabase/Neon/Lokal) dan inisialisasi Prisma ORM.
   - Pembuatan UI/UX dasar untuk _Dashboard_.
 - **Fase 2 (Minggu 3-4): Logika Core & API Routes**
   - Implementasi _IndexedDB_ untuk penyimpanan lokal (_offline mode_).

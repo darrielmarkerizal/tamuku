@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TtdStatus {
+  WEEKLY_ROUTINE
+  MENSTRUATION_ROUTINE
+  STOCK_ADDED
+}
+
+model User {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String?
+  username         String            @unique
+  password         String
+  inventory_ttd    Int               @default(0)
+  badges           String[]          @default([])
+  menstruationLogs MenstruationLog[]
+  ttdLogs          TtdLog[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model MenstruationLog {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  start_date   DateTime
+  end_date     DateTime?
+  cycle_length Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model TtdLog {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consumed_date DateTime
+  status        TtdStatus
+  createdAt     DateTime  @default(now())
+}

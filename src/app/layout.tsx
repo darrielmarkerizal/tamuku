@@ -28,6 +28,10 @@ export const metadata: Metadata = {
   description:
     "Pelacak siklus haid dan Tablet Tambah Darah untuk siswi SMP. Hangat, ramah, offline-first.",
   applicationName: "Tamuku",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     title: "Tamuku",
