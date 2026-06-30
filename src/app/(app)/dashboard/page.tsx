@@ -79,9 +79,12 @@ function TtdCard() {
             Mode harian — kamu sedang haid.
           </p>
         </div>
-        <span className="shrink-0 bg-pink-soft rounded-full px-3 py-1 border-2 border-ink font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
-          Sisa: 6 pil
-        </span>
+        <Link
+          href="/ttd"
+          className="shrink-0 bg-pink-soft rounded-full px-3 py-1 border-2 border-ink shadow-retro-sm font-mono text-[10px] font-bold uppercase tracking-wider text-ink press-retro"
+        >
+          Sisa: 6 pil →
+        </Link>
       </div>
       <button
         type="button"
@@ -89,6 +92,12 @@ function TtdCard() {
       >
         SUDAH MINUM TTD HARI INI ✓
       </button>
+      <Link
+        href="/ttd/riwayat"
+        className="text-center font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong hover:underline"
+      >
+        Lihat riwayat & stok →
+      </Link>
     </section>
   );
 }
@@ -125,30 +134,36 @@ function StreakCard() {
 
 function JournalQuickCard() {
   return (
-    <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5">
-      <div className="flex justify-between items-center mb-4">
+    <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5 flex flex-col gap-4">
+      <div className="flex justify-between items-center">
         <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
           JURNAL HARI INI
         </p>
         <Link
-          href="/jurnal/today"
-          className="font-sans text-sm font-bold text-primary-strong hover:underline"
+          href="/jurnal"
+          className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong hover:underline"
         >
-          Tambahkan catatan →
+          Lihat semua →
         </Link>
       </div>
       <div className="flex gap-2 justify-between">
         {moods.map(({ emoji, label }) => (
-          <button
+          <Link
             key={label}
-            type="button"
-            aria-label={label}
+            href={`/jurnal/today?mood=${encodeURIComponent(label.toLowerCase())}`}
+            aria-label={`Catat mood: ${label}`}
             className="size-10 bg-pink-soft rounded-[6px] border-2 border-ink flex items-center justify-center text-xl press-retro shadow-retro-sm"
           >
             {emoji}
-          </button>
+          </Link>
         ))}
       </div>
+      <Link
+        href="/jurnal/today"
+        className="text-center font-sans text-sm font-bold text-primary-strong hover:underline"
+      >
+        Tambahkan catatan →
+      </Link>
     </section>
   );
 }

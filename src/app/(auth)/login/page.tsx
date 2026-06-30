@@ -1,9 +1,20 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { Mascot } from "@/components/mascot";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // Tahap 4: server action auth. Sekarang mock click-through.
+    router.push("/dashboard");
+  }
+
   return (
     <>
       <header className="flex flex-col items-center mb-8 w-full max-w-sm">
@@ -25,7 +36,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="flex flex-col gap-4">
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <Field>
             <Label htmlFor="username">USERNAME</Label>
             <Input
@@ -50,12 +61,12 @@ export default function LoginPage() {
           </Field>
 
           <div className="flex justify-end -mt-1">
-            <Link
-              href="#"
+            <a
+              href="mailto:halo@tamuku.id?subject=Lupa%20Password%20Tamuku&body=Halo%20tim%20Tamuku%2C%20saya%20lupa%20password%20akun%20saya%3A%20"
               className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong hover:underline underline-offset-2"
             >
               Lupa password?
-            </Link>
+            </a>
           </div>
 
           <Button type="submit" size="lg" className="mt-2 w-full">

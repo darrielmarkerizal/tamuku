@@ -14,7 +14,7 @@ export function AppHeader({ greeting, hasUnread = false }: AppHeaderProps) {
       </h1>
       <div className="flex items-center gap-3">
         <Link
-          href="/notifikasi"
+          href="/profil/notifikasi"
           className="relative border-2 border-ink rounded-full p-2 bg-surface press-retro shadow-retro-sm"
           aria-label="Notifikasi"
         >

@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // Tahap 4: server action create user. Sekarang mock click-through ke onboarding.
+    router.push("/onboarding");
+  }
 
   return (
     <div className="max-w-[390px] w-full mx-auto min-h-dvh flex flex-col relative px-5 pt-8 pb-12">
@@ -31,7 +39,7 @@ export default function RegisterPage() {
       </div>
 
       <main className="bg-surface border-2 border-ink rounded-[12px] p-5 shadow-retro-lg mb-8">
-        <form className="flex flex-col gap-5">
+        <form id="register-form" className="flex flex-col gap-5" onSubmit={handleSubmit}>
           <Field>
             <Label htmlFor="fullName">Nama Lengkap</Label>
             <Input id="fullName" name="fullName" placeholder="Mis. Nisa Fredlina" required />
@@ -96,7 +104,7 @@ export default function RegisterPage() {
         Datamu disimpan pribadi dan tidak dibagikan ke siapa pun.
       </p>
 
-      <Button type="submit" size="lg" className="w-full mb-8">
+      <Button type="submit" form="register-form" size="lg" className="w-full mb-8">
         DAFTAR SEKARANG
       </Button>
 
