@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, BellOff, ChevronDown, ChevronUp, Droplet, MoonStar } from "lucide-react";
+import { Bell, BellOff, Droplet, MoonStar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubpageHeader } from "@/components/subpage-header";
+import { RetroToggle } from "@/components/retro-toggle";
+import { TimePicker } from "@/components/time-picker";
 import { cn } from "@/lib/cn";
 
 const DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
@@ -53,7 +55,8 @@ export default function NotifikasiPage() {
     quiet: true,
   });
 
-  const toggle = (k: string) => setToggles((t) => ({ ...t, [k]: !t[k] }));
+  const setToggle = (k: string) => (next: boolean) =>
+    setToggles((t) => ({ ...t, [k]: next }));
 
   return (
     <>
@@ -84,25 +87,16 @@ export default function NotifikasiPage() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-4 items-center py-2">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted self-start">
+        <section className="flex flex-col gap-4 py-2">
+          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
             JAM PENGINGAT
           </h2>
-          <div className="flex items-center gap-6">
-            <Stepper
-              onUp={() => setHour((h) => (h + 1) % 24)}
-              onDown={() => setHour((h) => (h + 23) % 24)}
-            />
-            <div className="bg-surface border-2 border-ink rounded-[12px] px-8 py-4 shadow-retro flex items-center justify-center">
-              <span className="font-mono text-[48px] font-bold leading-none tracking-widest text-ink">
-                {String(hour).padStart(2, "0")}:{String(minute).padStart(2, "0")}
-              </span>
-            </div>
-            <Stepper
-              onUp={() => setMinute((m) => (m + 5) % 60)}
-              onDown={() => setMinute((m) => (m + 55) % 60)}
-            />
-          </div>
+          <TimePicker
+            hour={hour}
+            minute={minute}
+            onHourChange={setHour}
+            onMinuteChange={setMinute}
+          />
         </section>
 
         <section className="flex flex-col gap-3">
@@ -125,23 +119,11 @@ export default function NotifikasiPage() {
                   {c.desc}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={toggles[c.key]}
-                onClick={() => toggle(c.key)}
-                className={cn(
-                  "relative shrink-0 w-12 h-6 border-2 border-ink rounded-[6px] transition-colors press-retro",
-                  toggles[c.key] ? "bg-primary-strong" : "bg-surface"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-[1px] size-4 bg-surface border-2 border-ink rounded-[4px] transition-transform",
-                    toggles[c.key] ? "translate-x-[22px]" : "translate-x-[1px]"
-                  )}
-                />
-              </button>
+              <RetroToggle
+                checked={toggles[c.key]}
+                onChange={setToggle(c.key)}
+                label={c.title}
+              />
             </div>
           ))}
         </section>
@@ -151,28 +133,5 @@ export default function NotifikasiPage() {
         </Button>
       </main>
     </>
-  );
-}
-
-function Stepper({ onUp, onDown }: { onUp: () => void; onDown: () => void }) {
-  return (
-    <div className="flex flex-col gap-6 items-center">
-      <button
-        type="button"
-        onClick={onUp}
-        aria-label="Tambah"
-        className="size-10 bg-surface border-2 border-ink rounded-[6px] shadow-retro-sm flex items-center justify-center press-retro"
-      >
-        <ChevronUp className="size-5 text-ink" strokeWidth={2.75} />
-      </button>
-      <button
-        type="button"
-        onClick={onDown}
-        aria-label="Kurang"
-        className="size-10 bg-surface border-2 border-ink rounded-[6px] shadow-retro-sm flex items-center justify-center press-retro"
-      >
-        <ChevronDown className="size-5 text-ink" strokeWidth={2.75} />
-      </button>
-    </div>
   );
 }

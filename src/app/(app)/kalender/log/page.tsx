@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, CalendarDays, Timer } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { Button } from "@/components/ui/button";
+import { RetroToggle } from "@/components/retro-toggle";
 import { cn } from "@/lib/cn";
 
 export default function CatatHaidManualPage() {
@@ -66,23 +67,11 @@ export default function CatatHaidManualPage() {
                 <br />
                 AKTIF
               </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={stillActive}
-                onClick={() => setStillActive((v) => !v)}
-                className={cn(
-                  "relative w-11 h-6 border-2 border-ink rounded-full transition-colors",
-                  stillActive ? "bg-primary" : "bg-surface"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-[1px] size-4 bg-white border-2 border-ink rounded-full transition-transform",
-                    stillActive ? "translate-x-[18px]" : "translate-x-[1px]"
-                  )}
-                />
-              </button>
+              <RetroToggle
+                checked={stillActive}
+                onChange={setStillActive}
+                label="Masih aktif"
+              />
             </div>
           </div>
         </section>
