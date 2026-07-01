@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { Mascot } from "@/components/mascot";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { isInstallable, promptInstall } = usePwaInstall();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -72,6 +74,17 @@ export default function LoginPage() {
           <Button type="submit" size="lg" className="mt-2 w-full">
             MASUK
           </Button>
+
+          {isInstallable && (
+            <Button 
+              type="button" 
+              size="lg" 
+              className="mt-2 w-full bg-accent-mint hover:bg-[#7bc8a7] text-ink"
+              onClick={promptInstall}
+            >
+              ⬇️ INSTALL APLIKASI
+            </Button>
+          )}
         </form>
       </main>
 
