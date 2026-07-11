@@ -1,3 +1,11 @@
+import {
+  Apple,
+  Droplet,
+  HeartPulse,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
+
 export type Flashcard = {
   id: string;
   title: string;
@@ -8,6 +16,8 @@ export type FlashcardCategory = {
   slug: string;
   label: string;
   description: string;
+  Icon: LucideIcon;
+  tone: string;
   cards: Flashcard[];
 };
 
@@ -16,6 +26,8 @@ export const CATEGORIES: FlashcardCategory[] = [
     slug: "manfaat-ttd",
     label: "MANFAAT TTD",
     description: "Kenapa minum TTD penting buat kamu.",
+    Icon: HeartPulse,
+    tone: "bg-pink-soft",
     cards: [
       {
         id: "manfaat-1",
@@ -48,6 +60,8 @@ export const CATEGORIES: FlashcardCategory[] = [
     slug: "makanan-penambah-darah",
     label: "MAKANAN PENAMBAH DARAH",
     description: "Makanan sehari-hari yang bantu kerja TTD.",
+    Icon: Apple,
+    tone: "bg-accent-mint",
     cards: [
       {
         id: "makanan-1",
@@ -80,6 +94,8 @@ export const CATEGORIES: FlashcardCategory[] = [
     slug: "mitos-fakta-haid",
     label: "MITOS & FAKTA HAID",
     description: "Cek dulu yuk, mana yang bener mana yang mitos.",
+    Icon: Sparkles,
+    tone: "bg-accent-yellow",
     cards: [
       {
         id: "mitos-1",
@@ -112,6 +128,8 @@ export const CATEGORIES: FlashcardCategory[] = [
     slug: "kebersihan-haid",
     label: "KEBERSIHAN HAID",
     description: "Tips simpel jaga kebersihan biar tetep nyaman.",
+    Icon: Droplet,
+    tone: "bg-pink-cream",
     cards: [
       {
         id: "bersih-1",
@@ -145,3 +163,18 @@ export const CATEGORIES: FlashcardCategory[] = [
 export function getCategory(slug: string): FlashcardCategory | undefined {
   return CATEGORIES.find((c) => c.slug === slug);
 }
+
+// Flat lookup
+export const FLASHCARDS: (Flashcard & { category: string })[] =
+  CATEGORIES.flatMap((c) => c.cards.map((card) => ({ ...card, category: c.slug })));
+
+export const FLASHCARDS_BY_ID: Record<
+  string,
+  Flashcard & { category: string }
+> = FLASHCARDS.reduce(
+  (acc, f) => {
+    acc[f.id] = f;
+    return acc;
+  },
+  {} as Record<string, Flashcard & { category: string }>
+);

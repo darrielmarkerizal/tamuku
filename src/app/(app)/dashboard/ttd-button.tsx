@@ -1,26 +1,60 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { FlashcardModal } from "@/components/flashcard-modal";
 import { logTtdAction } from "@/lib/ttd/actions";
+import { makeOp, submitOp } from "@/lib/offline/sync-client";
 
 interface Props {
   alreadyLogged: boolean;
 }
 
 export function TtdButton({ alreadyLogged }: Props) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [doneNow, setDoneNow] = useState(false);
+  const [flashcardIds, setFlashcardIds] = useState<string[] | null>(null);
 
   function handleClick() {
     setError(null);
     startTransition(async () => {
-      const res = await logTtdAction();
+      // Path online: Server Action → response cepat + flashcard IDs
+      // Path offline: fallback ke outbox (via sync-client)
+      const isOnline =
+        typeof navigator === "undefined" || navigator.onLine;
+      if (isOnline) {
+        try {
+          const res = await logTtdAction();
+          if (res.ok) {
+            setDoneNow(true);
+            if (
+              res.data?.flashcardIds &&
+              res.data.flashcardIds.length > 0
+            ) {
+              setFlashcardIds(res.data.flashcardIds);
+            }
+            return;
+          }
+          setError(res.error);
+          return;
+        } catch (err) {
+          // Network fail → fallback ke outbox
+          console.warn("logTtd online failed, fallback to outbox:", err);
+        }
+      }
+
+      // Offline / fallback path
+      const op = makeOp("logTtd");
+      const res = await submitOp(op);
       if (res.ok) {
         setDoneNow(true);
+        // Optimistik — flashcard nanti muncul saat online sync + revalidate
+        router.refresh();
       } else {
-        setError(res.error);
+        setError("Nggak bisa simpan sekarang. Coba lagi saat online.");
       }
     });
   }
@@ -41,6 +75,13 @@ export function TtdButton({ alreadyLogged }: Props) {
         )}
       </button>
       {error && <p className="font-sans text-xs text-danger px-2">{error}</p>}
+
+      {flashcardIds && (
+        <FlashcardModal
+          ids={flashcardIds}
+          onClose={() => setFlashcardIds(null)}
+        />
+      )}
     </div>
   );
 }

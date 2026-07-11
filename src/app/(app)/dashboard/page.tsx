@@ -4,18 +4,29 @@ import { AppHeader } from "@/components/app-header";
 import { Mascot } from "@/components/mascot";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
-import { daysBetween, formatShort, today } from "@/lib/date";
+import { addDays, daysBetween, formatShort, today } from "@/lib/date";
 import { isMenstruationActive } from "@/lib/period/sma";
+import { computeMascotState } from "@/lib/mascot-state";
 import { MOODS } from "@/lib/mood-icons";
 import { PeriodButton } from "./period-button";
 import { TtdButton } from "./ttd-button";
+
+const MASCOT_LABEL: Record<
+  ReturnType<typeof computeMascotState>,
+  string
+> = {
+  vibrant: "Hemo lagi semangat!",
+  cheerful: "Hemo lagi ceria!",
+  tired: "Hemo lagi capek",
+  pucat: "Hemo lagi pucat",
+};
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = (user.name ?? user.username).split(" ")[0].toUpperCase();
   const todayDate = today();
 
-  const [periods, ttdToday] = await Promise.all([
+  const [periods, ttdToday, ttdLogs14] = await Promise.all([
     db.menstruationLog.findMany({
       where: { userId: user.id },
       select: { start_date: true, end_date: true },
@@ -25,7 +36,14 @@ export default async function DashboardPage() {
       where: { userId_log_date: { userId: user.id, log_date: todayDate } },
       select: { id: true },
     }),
+    db.ttdLog.findMany({
+      where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
+      select: { log_date: true },
+    }),
   ]);
+
+  const mascotState = computeMascotState(ttdLogs14, periods, todayDate);
+  const mascotLabel = MASCOT_LABEL[mascotState];
 
   // "Active" = ada log haid yang belum ditutup (end_date === null)
   const activePeriod = periods
@@ -74,7 +92,7 @@ export default async function DashboardPage() {
           alreadyLoggedTtd={alreadyLoggedTtd}
         />
         <div className="grid grid-cols-2 gap-4">
-          <MascotCard />
+          <MascotCard state={mascotState} label={mascotLabel} />
           <StreakCard streak={user.streak_current} />
         </div>
         <JournalQuickCard />
@@ -155,15 +173,21 @@ function TtdCard({
   );
 }
 
-function MascotCard() {
+function MascotCard({
+  state,
+  label,
+}: {
+  state: ReturnType<typeof computeMascotState>;
+  label: string;
+}) {
   return (
     <Link
       href="/profil"
       className="bg-accent-yellow rounded-[12px] border-2 border-ink shadow-retro p-4 flex flex-col items-center justify-center text-center press-retro"
     >
-      <Mascot state="cheerful" size={64} />
+      <Mascot state={state} size={64} />
       <p className="font-display text-base font-extrabold text-ink leading-tight mt-2">
-        Hemo lagi ceria!
+        {label}
       </p>
     </Link>
   );

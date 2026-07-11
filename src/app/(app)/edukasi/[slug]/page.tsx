@@ -3,15 +3,24 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { EdukasiDetailClient } from "@/components/edukasi-detail-client";
 import { getCategory } from "@/content/flashcards";
+import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export default async function EdukasiKategoriPage({ params }: Props) {
+  const user = await requireUser();
   const { slug } = await params;
   const category = getCategory(slug);
   if (!category) notFound();
+
+  const cur = await db.user.findUnique({
+    where: { id: user.id },
+    select: { seen_flashcards: true },
+  });
+  const seenIds = cur?.seen_flashcards ?? [];
 
   return (
     <>
@@ -43,7 +52,7 @@ export default async function EdukasiKategoriPage({ params }: Props) {
           </span>
         </div>
 
-        <EdukasiDetailClient cards={category.cards} />
+        <EdukasiDetailClient cards={category.cards} seenIds={seenIds} />
       </main>
     </>
   );

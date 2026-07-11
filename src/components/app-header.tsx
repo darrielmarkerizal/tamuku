@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import { SyncIndicator } from "@/components/sync-indicator";
 
 interface AppHeaderProps {
   greeting: React.ReactNode;
@@ -12,6 +13,7 @@ export function AppHeader({ greeting, hasUnread = false }: AppHeaderProps) {
       <h1 className="font-display text-2xl font-extrabold uppercase tracking-wide text-ink flex items-center gap-2">
         {greeting}
       </h1>
+      <SyncIndicator />
       <div className="flex items-center gap-3">
         <Link
           href="/profil/notifikasi"

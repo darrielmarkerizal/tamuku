@@ -1,25 +1,25 @@
 import Link from "next/link";
 import {
-  Award,
   ChevronRight,
+  CloudCog,
   Flame,
-  Footprints,
   Heart,
   Info,
   Lock,
   Pencil,
   Bell,
-  RefreshCw,
   Settings,
-  Shield,
   CalendarDays,
   CheckCircle2,
-  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/cn";
 import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
+import { addDays, today } from "@/lib/date";
+import { BADGES } from "@/lib/badges/rules";
+import { computeMascotState } from "@/lib/mascot-state";
 import { LogoutButton } from "./logout-button";
 
 type Stat = {
@@ -27,25 +27,6 @@ type Stat = {
   value: string;
   label: string;
 };
-
-
-type Badge = {
-  slug: string;
-  label: string;
-  Icon: LucideIcon;
-  bg: string;
-  iconColor: string;
-  locked?: boolean;
-};
-
-const BADGES: Badge[] = [
-  { slug: "iron-girl", label: "IRON GIRL", Icon: Award, bg: "bg-pink-soft", iconColor: "text-primary-strong" },
-  { slug: "cycle-sync", label: "CYCLE SYNC", Icon: RefreshCw, bg: "bg-accent-yellow", iconColor: "text-ink" },
-  { slug: "first-step", label: "LANGKAH AWAL", Icon: Footprints, bg: "bg-accent-mint", iconColor: "text-success" },
-  { slug: "master", label: "MASTER", Icon: Trophy, bg: "bg-pink-cream", iconColor: "text-text-muted", locked: true },
-  { slug: "streak-365", label: "STREAK 365", Icon: Flame, bg: "bg-pink-cream", iconColor: "text-text-muted", locked: true },
-  { slug: "guru", label: "GURU", Icon: Shield, bg: "bg-pink-cream", iconColor: "text-text-muted", locked: true },
-];
 
 type Setting = {
   Icon: LucideIcon;
@@ -56,20 +37,54 @@ type Setting = {
 const SETTINGS: Setting[] = [
   { Icon: Pencil, label: "Edit profil", href: "/profil/edit" },
   { Icon: Bell, label: "Pengingat & notifikasi", href: "/profil/notifikasi" },
+  { Icon: CloudCog, label: "Status sync", href: "/profil/sync" },
   { Icon: Lock, label: "Privasi & data", href: "/profil/privasi" },
   { Icon: Info, label: "Tentang Tamuku", href: "/profil/tentang" },
 ];
 
 export default async function ProfilPage() {
   const user = await requireUser();
+  const todayDate = today();
+  const cutoff30 = addDays(todayDate, -30);
+
+  const [ttdLogs30, periodsClosed, ttdLogs14] = await Promise.all([
+    db.ttdLog.count({
+      where: { userId: user.id, log_date: { gte: cutoff30 } },
+    }),
+    db.menstruationLog.count({
+      where: { userId: user.id, end_date: { not: null } },
+    }),
+    db.ttdLog.findMany({
+      where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
+      select: { log_date: true },
+    }),
+  ]);
+
+  // Kepatuhan 30 hari: jumlah log / target ~ 30 hari (jika daily) atau ~4 minggu
+  // MVP heuristic: taken / min(30, days-since-signup)
+  const complianceTarget = 30;
+  const compliancePct = Math.min(
+    100,
+    Math.round((ttdLogs30 / complianceTarget) * 100)
+  );
+
+  const periods14 = await db.menstruationLog.findMany({
+    where: { userId: user.id },
+    select: { start_date: true, end_date: true },
+  });
+  const mascotState = computeMascotState(ttdLogs14, periods14, todayDate);
+
   const stats: Stat[] = [
     { Icon: Flame, value: String(user.streak_current), label: "MINGGU STREAK" },
-    { Icon: CheckCircle2, value: "—", label: "KEPATUHAN 30H" },
-    { Icon: CalendarDays, value: "—", label: "SIKLUS DICATAT" },
+    { Icon: CheckCircle2, value: `${compliancePct}%`, label: "KEPATUHAN 30H" },
+    { Icon: CalendarDays, value: String(periodsClosed), label: "SIKLUS DICATAT" },
   ];
   const schoolLine = [user.school, user.class_name ? `Kelas ${user.class_name}` : null]
     .filter(Boolean)
     .join(" • ");
+
+  const owned = new Set(user.badges);
+
   return (
     <>
       <header className="px-5 pt-6 pb-2 flex justify-between items-center">
@@ -88,7 +103,7 @@ export default async function ProfilPage() {
       <main className="flex-1 px-5 pt-4 pb-8 flex flex-col gap-7">
         <section className="bg-accent-yellow border-2 border-ink rounded-[12px] shadow-retro p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="size-20 rounded-full border-2 border-ink bg-surface shrink-0 shadow-retro-sm flex items-center justify-center z-10">
-            <Mascot state="vibrant" size={64} />
+            <Mascot state={mascotState} size={64} />
           </div>
           <div className="flex flex-col z-10 min-w-0">
             <h2 className="font-display text-2xl font-extrabold text-ink mb-2 truncate">
@@ -126,32 +141,42 @@ export default async function ProfilPage() {
             LENCANA KAMU
           </h3>
           <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-            {BADGES.map((b) => (
-              <div
-                key={b.slug}
-                className={cn(
-                  "flex flex-col items-center gap-2 text-center",
-                  b.locked && "opacity-60 grayscale"
-                )}
-              >
+            {BADGES.map((b) => {
+              const locked = !owned.has(b.slug);
+              return (
                 <div
+                  key={b.slug}
                   className={cn(
-                    "size-16 rounded-full border-2 border-ink shadow-retro-sm flex items-center justify-center relative",
-                    b.bg
+                    "flex flex-col items-center gap-2 text-center",
+                    locked && "opacity-60 grayscale"
                   )}
+                  title={b.description}
                 >
-                  <b.Icon className={cn("size-7", b.iconColor)} strokeWidth={2.5} />
-                  {b.locked && (
-                    <span className="absolute -bottom-1 -right-1 size-5 bg-surface rounded-full border-2 border-ink flex items-center justify-center">
-                      <Lock className="size-3 text-ink" strokeWidth={3} />
-                    </span>
-                  )}
+                  <div
+                    className={cn(
+                      "size-16 rounded-full border-2 border-ink shadow-retro-sm flex items-center justify-center relative",
+                      locked ? "bg-pink-cream" : b.bg
+                    )}
+                  >
+                    <b.Icon
+                      className={cn(
+                        "size-7",
+                        locked ? "text-text-muted" : b.iconColor
+                      )}
+                      strokeWidth={2.5}
+                    />
+                    {locked && (
+                      <span className="absolute -bottom-1 -right-1 size-5 bg-surface rounded-full border-2 border-ink flex items-center justify-center">
+                        <Lock className="size-3 text-ink" strokeWidth={3} />
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+                    {b.name}
+                  </span>
                 </div>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
-                  {b.label}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

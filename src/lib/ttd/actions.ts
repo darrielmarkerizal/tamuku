@@ -5,11 +5,17 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
 import { today } from "@/lib/date";
+import { evaluateStreak } from "@/lib/streak/engine";
+import { pickNextForUser } from "@/lib/flashcards/pick";
 import { currentTtdMode } from "./schedule";
 
 export type TtdActionResult<T = null> =
   | { ok: true; data?: T }
   | { ok: false; error: string };
+
+export interface LogTtdSuccess {
+  flashcardIds: string[];
+}
 
 // ─── Log konsumsi ────────────────────────────────────────────────────────────
 
@@ -17,7 +23,9 @@ export type TtdActionResult<T = null> =
  * Log konsumsi TTD hari ini. Unique (userId, log_date) mencegah double log.
  * Kurangi inventory_ttd jika > 0. Tulis InventoryAdjustment sebagai audit.
  */
-export async function logTtdAction(): Promise<TtdActionResult> {
+export async function logTtdAction(): Promise<
+  TtdActionResult<LogTtdSuccess>
+> {
   const user = await requireUser();
   const todayDate = today();
 
@@ -31,12 +39,19 @@ export async function logTtdAction(): Promise<TtdActionResult> {
     return { ok: false, error: "Kamu sudah catat TTD hari ini." };
   }
 
-  const periods = await db.menstruationLog.findMany({
-    where: { userId: user.id },
-    select: { start_date: true, end_date: true },
-    orderBy: { start_date: "asc" },
-  });
+  const [periods, userSeen] = await Promise.all([
+    db.menstruationLog.findMany({
+      where: { userId: user.id },
+      select: { start_date: true, end_date: true },
+      orderBy: { start_date: "asc" },
+    }),
+    db.user.findUnique({
+      where: { id: user.id },
+      select: { seen_flashcards: true },
+    }),
+  ]);
   const status = currentTtdMode(todayDate, periods);
+  const flashcardIds = pickNextForUser(userSeen?.seen_flashcards ?? [], 2);
 
   await db.$transaction(async (tx) => {
     await tx.ttdLog.create({
@@ -67,10 +82,47 @@ export async function logTtdAction(): Promise<TtdActionResult> {
     }
   });
 
+  // Update streak realtime — kalau gagal, skip diam-diam (streak bisa
+  // di-recovery cron badge harian).
+  try {
+    await updateStreakForUser(user.id);
+  } catch {}
+
   revalidatePath("/dashboard");
   revalidatePath("/ttd");
   revalidatePath("/ttd/riwayat");
-  return { ok: true };
+  return { ok: true, data: { flashcardIds } };
+}
+
+/**
+ * Hitung ulang streak user dari semua TtdLog + MenstruationLog, update
+ * user.streak_current, streak_longest, streak_last_week_iso.
+ */
+export async function updateStreakForUser(userId: string) {
+  const [logs, periods, notif] = await Promise.all([
+    db.ttdLog.findMany({
+      where: { userId },
+      select: { log_date: true },
+    }),
+    db.menstruationLog.findMany({
+      where: { userId },
+      select: { start_date: true, end_date: true },
+    }),
+    db.notificationSetting.findUnique({
+      where: { userId },
+      select: { weekly_day: true },
+    }),
+  ]);
+  const summary = evaluateStreak(logs, periods, notif?.weekly_day ?? 5);
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      streak_current: summary.current,
+      streak_longest: summary.longest,
+      streak_last_week_iso: summary.lastWeekIso,
+    },
+  });
+  return summary;
 }
 
 // ─── Tambah stok ─────────────────────────────────────────────────────────────

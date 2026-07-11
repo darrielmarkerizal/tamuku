@@ -1,29 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/cn";
-
-export type Flashcard = {
-  title: string;
-  body: string;
-};
+import { FLASHCARDS_BY_ID } from "@/content/flashcards";
+import { markFlashcardSeenAction } from "@/lib/flashcards/actions";
 
 interface FlashcardModalProps {
-  cards: Flashcard[];
+  ids: string[];
   onClose: () => void;
-  open?: boolean;
 }
 
-export function FlashcardModal({ cards, onClose, open = true }: FlashcardModalProps) {
+export function FlashcardModal({ ids, onClose }: FlashcardModalProps) {
+  const cards = useMemo(
+    () => ids.map((id) => FLASHCARDS_BY_ID[id]).filter(Boolean),
+    [ids]
+  );
   const [index, setIndex] = useState(0);
+  const [pending, startTransition] = useTransition();
 
-  if (!open || cards.length === 0) return null;
+  if (cards.length === 0) return null;
 
   const card = cards[index];
   const isFirst = index === 0;
   const isLast = index === cards.length - 1;
+
+  function handleClose() {
+    startTransition(async () => {
+      await markFlashcardSeenAction(ids);
+      onClose();
+    });
+  }
 
   return (
     <div
@@ -38,9 +46,10 @@ export function FlashcardModal({ cards, onClose, open = true }: FlashcardModalPr
           </span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={pending}
             aria-label="Tutup"
-            className="size-10 bg-surface border-2 border-ink rounded-full flex items-center justify-center shadow-retro-sm press-retro"
+            className="size-10 bg-surface border-2 border-ink rounded-full flex items-center justify-center shadow-retro-sm press-retro disabled:opacity-70"
           >
             <X className="size-5 text-ink" strokeWidth={2.5} />
           </button>
@@ -92,9 +101,12 @@ export function FlashcardModal({ cards, onClose, open = true }: FlashcardModalPr
 
             <button
               type="button"
-              onClick={() => (isLast ? onClose() : setIndex((i) => i + 1))}
+              onClick={() =>
+                isLast ? handleClose() : setIndex((i) => i + 1)
+              }
+              disabled={pending}
               aria-label={isLast ? "Tutup" : "Kartu berikutnya"}
-              className="size-12 bg-primary border-2 border-ink rounded-[12px] flex items-center justify-center shadow-retro press-retro"
+              className="size-12 bg-primary border-2 border-ink rounded-[12px] flex items-center justify-center shadow-retro press-retro disabled:opacity-70"
             >
               <ArrowRight className="size-5 text-white" strokeWidth={2.75} />
             </button>
@@ -102,10 +114,11 @@ export function FlashcardModal({ cards, onClose, open = true }: FlashcardModalPr
 
           <button
             type="button"
-            onClick={onClose}
-            className="font-sans text-base font-bold text-ink underline decoration-2 underline-offset-4 hover:text-primary-strong transition-colors py-2 active:scale-95"
+            onClick={handleClose}
+            disabled={pending}
+            className="font-sans text-base font-bold text-ink underline decoration-2 underline-offset-4 hover:text-primary-strong transition-colors py-2 active:scale-95 disabled:opacity-70"
           >
-            Cukup, tutup kartu
+            {pending ? "Menyimpan…" : "Cukup, tutup kartu"}
           </button>
         </div>
       </div>
