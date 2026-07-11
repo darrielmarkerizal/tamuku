@@ -1,39 +1,89 @@
 import Link from "next/link";
-import { ArrowLeft, Pill, Package } from "lucide-react";
+import { ArrowLeft, Pill, Package, Settings2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { formatDayShort, formatShort, isSameLocalDay, today } from "@/lib/date";
+import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
 
 type LogItem = {
-  type: "drink" | "stock";
+  id: string;
+  kind: "drink" | "stock" | "correction";
   title: string;
-  date: string;
+  detail: string; // "Sen, 28 Jun"
   badge: string;
+  createdAt: Date;
 };
 
-type LogGroup = {
-  label: string;
-  items: LogItem[];
-};
+export default async function TtdRiwayatPage() {
+  const user = await requireUser();
+  const todayDate = today();
 
-const GROUPS: LogGroup[] = [
-  {
-    label: "MINGGU INI",
-    items: [
-      { type: "drink", title: "Minum TTD", date: "Sen, 28 Jun • 19:02", badge: "HARIAN" },
-      { type: "drink", title: "Minum TTD", date: "Min, 27 Jun • 18:55", badge: "HARIAN" },
-    ],
-  },
-  {
-    label: "MINGGU LALU",
-    items: [
-      { type: "stock", title: "+10 pil dari UKS", date: "Jum, 25 Jun • 09:30", badge: "STOK" },
-      { type: "drink", title: "Minum TTD", date: "Sel, 22 Jun • 19:10", badge: "MINGGUAN" },
-    ],
-  },
-];
+  const [ttdLogs, adjustments] = await Promise.all([
+    db.ttdLog.findMany({
+      where: { userId: user.id },
+      select: { id: true, log_date: true, status: true, createdAt: true },
+      orderBy: { log_date: "desc" },
+      take: 60,
+    }),
+    db.inventoryAdjustment.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        delta: true,
+        reason: true,
+        note: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 60,
+    }),
+  ]);
 
-const FILTERS = ["Semua", "Diminum", "Stok Masuk"];
+  // Consumed adjustment berpasangan dengan ttdLog — jangan tampilkan double.
+  // Kita hanya render adjustments non-CONSUMED sebagai entri terpisah.
+  const items: LogItem[] = [];
+  for (const log of ttdLogs) {
+    items.push({
+      id: `t-${log.id}`,
+      kind: "drink",
+      title: "Minum TTD",
+      detail: `${formatDayShort(log.log_date)}, ${formatShort(log.log_date)}`,
+      badge: log.status === "MENSTRUATION_ROUTINE" ? "HARIAN" : "MINGGUAN",
+      createdAt: log.createdAt,
+    });
+  }
+  for (const adj of adjustments) {
+    if (adj.reason === "CONSUMED") continue;
+    items.push({
+      id: `a-${adj.id}`,
+      kind: adj.reason === "CORRECTION" ? "correction" : "stock",
+      title:
+        adj.reason === "RECEIVED"
+          ? `+${adj.delta} pil${adj.note ? ` — ${adj.note}` : ""}`
+          : `Koreksi stok ${adj.delta > 0 ? "+" : ""}${adj.delta}${
+              adj.note ? ` — ${adj.note}` : ""
+            }`,
+      detail: `${formatDayShort(adj.createdAt)}, ${formatShort(adj.createdAt)}`,
+      badge: adj.reason === "RECEIVED" ? "STOK" : "KOREKSI",
+      createdAt: adj.createdAt,
+    });
+  }
+  items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-export default function TtdRiwayatPage() {
+  // Grouping ringan: Hari ini / Minggu ini / Lebih lama
+  const startOfWeek = new Date(todayDate);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Minggu
+  const groups: { label: string; items: LogItem[] }[] = [
+    { label: "HARI INI", items: [] },
+    { label: "MINGGU INI", items: [] },
+    { label: "LEBIH LAMA", items: [] },
+  ];
+  for (const item of items) {
+    if (isSameLocalDay(item.createdAt, todayDate)) groups[0].items.push(item);
+    else if (item.createdAt >= startOfWeek) groups[1].items.push(item);
+    else groups[2].items.push(item);
+  }
+
   return (
     <>
       <header className="w-full sticky top-0 z-30 bg-surface border-b-2 border-ink flex justify-between items-center px-5 py-4">
@@ -51,57 +101,57 @@ export default function TtdRiwayatPage() {
         </div>
       </header>
 
-      <div className="px-5 py-5 flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-        {FILTERS.map((f, i) => (
-          <button
-            key={f}
-            type="button"
-            className={cn(
-              "shrink-0 px-4 py-2 border-2 border-ink rounded-full shadow-retro-sm font-mono text-[10px] font-bold uppercase tracking-wider press-retro",
-              i === 0
-                ? "bg-primary text-white"
-                : "bg-surface text-text-muted hover:bg-pink-cream"
-            )}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      <main className="px-5 flex flex-col gap-7 pb-8">
-        {GROUPS.map((g) => (
-          <section key={g.label}>
-            <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-3">
-              {g.label}
-            </h2>
-            <div className="flex flex-col gap-3">
-              {g.items.map((item, i) => (
-                <LogRow key={i} item={item} />
-              ))}
-            </div>
-          </section>
-        ))}
-
-        <button
-          type="button"
-          className="w-full bg-surface border-2 border-ink shadow-retro rounded-[12px] py-4 mt-2 font-mono text-[10px] font-bold uppercase tracking-wider text-ink press-retro"
-        >
-          Muat lebih banyak
-        </button>
+      <main className="px-5 py-5 flex flex-col gap-7 pb-8">
+        {items.length === 0 ? (
+          <div className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-8 text-center">
+            <p className="font-display text-lg font-extrabold uppercase text-ink mb-2">
+              Belum ada catatan
+            </p>
+            <p className="font-sans text-sm text-text-muted">
+              Log TTD atau tambah stok muncul di sini.
+            </p>
+          </div>
+        ) : (
+          groups.map(
+            (g) =>
+              g.items.length > 0 && (
+                <section key={g.label}>
+                  <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-3">
+                    {g.label}
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {g.items.map((item) => (
+                      <LogRow key={item.id} item={item} />
+                    ))}
+                  </div>
+                </section>
+              )
+          )
+        )}
       </main>
     </>
   );
 }
 
 function LogRow({ item }: { item: LogItem }) {
-  const isStock = item.type === "stock";
-  const Icon = isStock ? Package : Pill;
+  const Icon =
+    item.kind === "drink"
+      ? Pill
+      : item.kind === "correction"
+        ? Settings2
+        : Package;
+  const bg =
+    item.kind === "drink"
+      ? "bg-accent-mint"
+      : item.kind === "correction"
+        ? "bg-pink-soft"
+        : "bg-accent-yellow";
   return (
-    <div className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-4 flex items-center gap-4 press-retro cursor-pointer">
+    <div className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-4 flex items-center gap-4">
       <div
         className={cn(
           "size-12 shrink-0 border-2 border-ink rounded-[8px] flex items-center justify-center shadow-retro-sm",
-          isStock ? "bg-accent-yellow" : "bg-accent-mint"
+          bg
         )}
       >
         <Icon className="size-5 text-ink" strokeWidth={2.5} />
@@ -111,7 +161,7 @@ function LogRow({ item }: { item: LogItem }) {
           {item.title}
         </h3>
         <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mt-1">
-          {item.date}
+          {item.detail}
         </p>
       </div>
       <span className="shrink-0 px-2 py-1 bg-pink-cream border-2 border-ink rounded-full shadow-retro-sm font-mono text-[10px] font-bold uppercase tracking-wider text-ink">

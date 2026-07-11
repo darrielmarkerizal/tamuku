@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { Mascot } from "@/components/mascot";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { loginAction, type AuthState } from "@/lib/auth/actions";
+
+const INITIAL: AuthState = {};
 
 export default function LoginPage() {
-  const router = useRouter();
   const { isInstallable, promptInstall } = usePwaInstall();
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    // Tahap 4: server action auth. Sekarang mock click-through.
-    router.push("/dashboard");
-  }
+  const [state, formAction, pending] = useActionState(loginAction, INITIAL);
 
   return (
     <>
@@ -38,7 +35,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <form action={formAction} className="flex flex-col gap-4">
           <Field>
             <Label htmlFor="username">USERNAME</Label>
             <Input
@@ -47,7 +44,13 @@ export default function LoginPage() {
               placeholder="namamu_di_sini"
               autoComplete="username"
               required
+              aria-invalid={!!state?.fieldErrors?.username}
             />
+            {state?.fieldErrors?.username && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.username}
+              </p>
+            )}
           </Field>
 
           <Field>
@@ -59,8 +62,20 @@ export default function LoginPage() {
               placeholder="••••••••"
               autoComplete="current-password"
               required
+              aria-invalid={!!state?.fieldErrors?.password}
             />
+            {state?.fieldErrors?.password && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.password}
+              </p>
+            )}
           </Field>
+
+          {state?.error && (
+            <div className="bg-pink-cream border-2 border-danger rounded-[8px] px-3 py-2 font-sans text-sm text-danger">
+              {state.error}
+            </div>
+          )}
 
           <div className="flex justify-end -mt-1">
             <a
@@ -71,14 +86,14 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <Button type="submit" size="lg" className="mt-2 w-full">
-            MASUK
+          <Button type="submit" size="lg" className="mt-2 w-full" disabled={pending}>
+            {pending ? "MASUK…" : "MASUK"}
           </Button>
 
           {isInstallable && (
-            <Button 
-              type="button" 
-              size="lg" 
+            <Button
+              type="button"
+              size="lg"
               className="mt-2 w-full bg-accent-mint hover:bg-[#7bc8a7] text-ink"
               onClick={promptInstall}
             >

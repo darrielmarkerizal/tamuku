@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { Mascot } from "@/components/mascot";
+import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
+import { daysBetween, formatShort, today } from "@/lib/date";
+import { isMenstruationActive } from "@/lib/period/sma";
+import { PeriodButton } from "./period-button";
+import { TtdButton } from "./ttd-button";
 
 const moods = [
   { emoji: "😀", label: "Senang" },
@@ -11,18 +17,61 @@ const moods = [
   { emoji: "😟", label: "Cemas" },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await requireUser();
+  const firstName = (user.name ?? user.username).split(" ")[0].toUpperCase();
+  const todayDate = today();
+
+  const [periods, ttdToday] = await Promise.all([
+    db.menstruationLog.findMany({
+      where: { userId: user.id },
+      select: { start_date: true, end_date: true },
+      orderBy: { start_date: "asc" },
+    }),
+    db.ttdLog.findUnique({
+      where: { userId_log_date: { userId: user.id, log_date: todayDate } },
+      select: { id: true },
+    }),
+  ]);
+
+  // "Active" = ada log haid yang belum ditutup (end_date === null)
+  const activePeriod = periods
+    .slice()
+    .reverse()
+    .find((p) => p.end_date === null);
+  const isPeriodActive = !!activePeriod;
+  const periodDay = activePeriod
+    ? daysBetween(activePeriod.start_date, todayDate) + 1
+    : 0;
+  const periodStartLabel = activePeriod
+    ? formatShort(activePeriod.start_date)
+    : null;
+  const menstruating = isMenstruationActive(periods, todayDate);
+  const alreadyLoggedTtd = !!ttdToday;
+
   return (
     <>
-      <AppHeader greeting="HALO, NISA 👋" hasUnread />
+      <AppHeader greeting={`HALO, ${firstName} 👋`} hasUnread />
 
       <main className="px-5 flex flex-col gap-5 mt-2">
-        <StatusCard />
-        <PeriodLogButton />
-        <TtdCard />
+        <StatusCard
+          isPeriodActive={isPeriodActive}
+          periodDay={periodDay}
+          menstruating={menstruating}
+        />
+        <PeriodButton
+          isPeriodActive={isPeriodActive}
+          periodDay={periodDay}
+          periodStartLabel={periodStartLabel}
+        />
+        <TtdCard
+          inventory={user.inventory_ttd}
+          menstruating={menstruating}
+          alreadyLoggedTtd={alreadyLoggedTtd}
+        />
         <div className="grid grid-cols-2 gap-4">
           <MascotCard />
-          <StreakCard />
+          <StreakCard streak={user.streak_current} />
         </div>
         <JournalQuickCard />
       </main>
@@ -30,7 +79,21 @@ export default function DashboardPage() {
   );
 }
 
-function StatusCard() {
+function StatusCard({
+  isPeriodActive,
+  periodDay,
+  menstruating,
+}: {
+  isPeriodActive: boolean;
+  periodDay: number;
+  menstruating: boolean;
+}) {
+  const headline = isPeriodActive
+    ? `HARI KE-${periodDay} HAID KAMU`
+    : "SEHAT & AMAN HARI INI";
+  const sub = menstruating
+    ? "Ingat minum TTD ya, biar ga lemas."
+    : "Jangan lupa cek jadwal TTD kamu.";
   return (
     <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro-lg p-5 relative overflow-hidden">
       <div className="pr-24 relative z-10">
@@ -38,11 +101,9 @@ function StatusCard() {
           STATUS HARI INI
         </p>
         <h2 className="font-display text-2xl font-extrabold uppercase text-ink mb-2 leading-tight">
-          HARI KE-3 HAID KAMU
+          {headline}
         </h2>
-        <p className="font-sans text-base text-ink">
-          Ingat minum TTD ya, biar ga lemas.
-        </p>
+        <p className="font-sans text-base text-ink">{sub}</p>
       </div>
       <div className="absolute right-[-12px] bottom-[-8px] w-28 h-28 z-0 -rotate-6">
         <Mascot state="vibrant" size={112} />
@@ -51,23 +112,18 @@ function StatusCard() {
   );
 }
 
-function PeriodLogButton() {
-  return (
-    <button
-      type="button"
-      className="w-full h-[72px] bg-primary rounded-[12px] border-2 border-ink shadow-retro flex flex-col items-center justify-center px-4 press-retro"
-    >
-      <span className="font-display text-xl font-extrabold uppercase text-white leading-tight">
-        TANDAI HAID SELESAI
-      </span>
-      <span className="font-sans text-sm font-bold text-white/90 leading-tight mt-0.5">
-        Hari ke-3 dimulai 27 Jun
-      </span>
-    </button>
-  );
-}
-
-function TtdCard() {
+function TtdCard({
+  inventory,
+  menstruating,
+  alreadyLoggedTtd,
+}: {
+  inventory: number;
+  menstruating: boolean;
+  alreadyLoggedTtd: boolean;
+}) {
+  const mode = menstruating
+    ? "Mode harian — kamu sedang haid."
+    : "Mode mingguan — jangan lupa Jumat.";
   return (
     <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5 flex flex-col gap-4">
       <div className="flex justify-between items-start gap-3">
@@ -75,23 +131,16 @@ function TtdCard() {
           <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1">
             TTD HARI INI
           </p>
-          <p className="font-sans text-base text-ink">
-            Mode harian — kamu sedang haid.
-          </p>
+          <p className="font-sans text-base text-ink">{mode}</p>
         </div>
         <Link
           href="/ttd"
           className="shrink-0 bg-pink-soft rounded-full px-3 py-1 border-2 border-ink shadow-retro-sm font-mono text-[10px] font-bold uppercase tracking-wider text-ink press-retro"
         >
-          Sisa: 6 pil →
+          Sisa: {inventory} pil →
         </Link>
       </div>
-      <button
-        type="button"
-        className="w-full bg-accent-mint rounded-[8px] border-2 border-ink shadow-retro-sm py-3 px-4 font-display text-lg font-extrabold text-ink uppercase text-center press-retro"
-      >
-        SUDAH MINUM TTD HARI INI ✓
-      </button>
+      <TtdButton alreadyLogged={alreadyLoggedTtd} />
       <Link
         href="/ttd/riwayat"
         className="text-center font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong hover:underline"
@@ -116,13 +165,13 @@ function MascotCard() {
   );
 }
 
-function StreakCard() {
+function StreakCard({ streak }: { streak: number }) {
   return (
     <div className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-4 flex flex-col items-center justify-center text-center">
       <div className="flex items-baseline gap-1">
         <span className="text-3xl">🔥</span>
         <span className="font-mono text-5xl font-bold text-ink leading-none tracking-tighter">
-          3
+          {streak}
         </span>
       </div>
       <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mt-2">
@@ -150,7 +199,7 @@ function JournalQuickCard() {
         {moods.map(({ emoji, label }) => (
           <Link
             key={label}
-            href={`/jurnal/today?mood=${encodeURIComponent(label.toLowerCase())}`}
+            href={`/jurnal/todayDate?mood=${encodeURIComponent(label.toLowerCase())}`}
             aria-label={`Catat mood: ${label}`}
             className="size-10 bg-pink-soft rounded-[6px] border-2 border-ink flex items-center justify-center text-xl press-retro shadow-retro-sm"
           >
@@ -159,7 +208,7 @@ function JournalQuickCard() {
         ))}
       </div>
       <Link
-        href="/jurnal/today"
+        href="/jurnal/todayDate"
         className="text-center font-sans text-sm font-bold text-primary-strong hover:underline"
       >
         Tambahkan catatan →

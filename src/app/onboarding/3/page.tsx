@@ -1,18 +1,37 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding-shell";
 import { Button } from "@/components/ui/button";
+import { readDraft, writeDraft } from "@/lib/onboarding-storage";
 
 const QUICK_ADD = [4, 10, 30];
 
 export default function OnboardingStep3Page() {
+  const router = useRouter();
   const [pills, setPills] = useState(4);
 
+  useEffect(() => {
+    const draft = readDraft();
+    if (typeof draft.initialTtd === "number") {
+      setPills(draft.initialTtd);
+    }
+  }, []);
+
+  function handleContinue() {
+    writeDraft({ initialTtd: pills });
+    router.push("/onboarding/4");
+  }
+
+  function handleSkip() {
+    writeDraft({ initialTtd: 0 });
+    router.push("/onboarding/4");
+  }
+
   return (
-    <OnboardingShell step={3} backHref="/onboarding/2">
+    <OnboardingShell step={3} backHref="/onboarding/2" onSkip={handleSkip}>
       <div className="flex flex-col gap-4 text-center mb-10 pt-4">
         <h1 className="font-display text-[40px] leading-none font-black text-ink uppercase tracking-tight">
           PUNYA BERAPA PIL TTD?
@@ -55,19 +74,18 @@ export default function OnboardingStep3Page() {
               onClick={() => setPills((p) => p + n)}
               className="px-5 py-3 bg-surface border-2 border-ink shadow-retro-sm rounded-[8px] press-retro font-mono text-[11px] font-bold uppercase tracking-wider text-ink"
             >
-              +{n}{n === 4 ? " (1 strip)" : ""}
+              +{n}
+              {n === 4 ? " (1 strip)" : ""}
             </button>
           ))}
         </div>
       </div>
 
       <div className="w-full mt-auto pt-8">
-        <Link href="/onboarding/4" className="block">
-          <Button size="lg" className="w-full">
-            <span>LANJUT</span>
-            <ArrowRight className="size-5" strokeWidth={3} />
-          </Button>
-        </Link>
+        <Button size="lg" className="w-full" onClick={handleContinue}>
+          <span>LANJUT</span>
+          <ArrowRight className="size-5" strokeWidth={3} />
+        </Button>
       </div>
     </OnboardingShell>
   );

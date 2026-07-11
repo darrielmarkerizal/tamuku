@@ -1,5 +1,6 @@
-import { JournalForm } from "@/components/journal-form";
+import { redirect } from "next/navigation";
+import { today, toIsoDate } from "@/lib/date";
 
-export default function JurnalTodayPage() {
-  return <JournalForm date="RAB, 30 JUN" />;
+export default async function JurnalTodayPage() {
+  redirect(`/jurnal/${toIsoDate(today())}`);
 }

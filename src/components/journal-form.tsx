@@ -1,51 +1,77 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { upsertJournalAction } from "@/lib/journal/actions";
 
 const MOODS = [
-  { value: "happy", emoji: "😀", label: "senang" },
-  { value: "calm", emoji: "😌", label: "tenang" },
-  { value: "sad", emoji: "😢", label: "sedih" },
-  { value: "angry", emoji: "😠", label: "kesal" },
-  { value: "tired", emoji: "😩", label: "lelah" },
-  { value: "anxious", emoji: "😟", label: "cemas" },
+  { value: "HAPPY", emoji: "😀", label: "senang" },
+  { value: "CALM", emoji: "😌", label: "tenang" },
+  { value: "SAD", emoji: "😢", label: "sedih" },
+  { value: "ANGRY", emoji: "😠", label: "kesal" },
+  { value: "TIRED", emoji: "😩", label: "lelah" },
+  { value: "ANXIOUS", emoji: "😟", label: "cemas" },
 ] as const;
 
 const SYMPTOMS = [
-  "Kram",
-  "Sakit kepala",
-  "Kembung",
-  "Jerawat",
-  "Lemas",
-  "Sakit pinggang",
-];
+  { value: "CRAMP", label: "Kram" },
+  { value: "HEADACHE", label: "Sakit kepala" },
+  { value: "BLOATING", label: "Kembung" },
+  { value: "ACNE", label: "Jerawat" },
+  { value: "FATIGUE", label: "Lemas" },
+  { value: "BACKPAIN", label: "Sakit pinggang" },
+] as const;
 
 interface JournalFormProps {
-  date: string;
-  initialMood?: string;
+  logDateIso: string;         // "YYYY-MM-DD" — dikirim ke server
+  dateLabel: string;           // "RAB, 8 JUL"
+  initialMood?: string | null;
   initialSymptoms?: string[];
   initialNote?: string;
   backHref?: string;
 }
 
 export function JournalForm({
-  date,
-  initialMood = "calm",
-  initialSymptoms = ["Kram", "Sakit kepala"],
+  logDateIso,
+  dateLabel,
+  initialMood,
+  initialSymptoms = [],
   initialNote = "",
   backHref = "/jurnal",
 }: JournalFormProps) {
-  const [mood, setMood] = useState(initialMood);
+  const router = useRouter();
+  const [mood, setMood] = useState<string | null>(initialMood ?? null);
   const [symptoms, setSymptoms] = useState<string[]>(initialSymptoms);
   const [note, setNote] = useState(initialNote);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const toggleSymptom = (s: string) => {
-    setSymptoms((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+    setSymptoms((cur) =>
+      cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]
+    );
   };
+
+  function handleSave() {
+    setError(null);
+    const fd = new FormData();
+    fd.set("log_date_iso", logDateIso);
+    if (mood) fd.set("mood", mood);
+    for (const s of symptoms) fd.append("symptoms", s);
+    fd.set("notes", note);
+    startTransition(async () => {
+      const res = await upsertJournalAction(fd);
+      if (res.ok) {
+        router.push("/jurnal");
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <>
@@ -60,7 +86,7 @@ export function JournalForm({
         <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-yellow border-2 border-ink rounded-full shadow-retro-sm">
           <Calendar className="size-4 text-ink" strokeWidth={2.75} />
           <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
-            {date}
+            {dateLabel}
           </span>
         </div>
       </header>
@@ -77,7 +103,7 @@ export function JournalForm({
                 <button
                   key={m.value}
                   type="button"
-                  onClick={() => setMood(m.value)}
+                  onClick={() => setMood(active ? null : m.value)}
                   className={cn(
                     "aspect-square border-2 border-ink rounded-[8px] flex flex-col items-center justify-center gap-1 transition-all",
                     active
@@ -101,12 +127,12 @@ export function JournalForm({
           </h2>
           <div className="flex flex-wrap gap-3">
             {SYMPTOMS.map((s) => {
-              const active = symptoms.includes(s);
+              const active = symptoms.includes(s.value);
               return (
                 <button
-                  key={s}
+                  key={s.value}
                   type="button"
-                  onClick={() => toggleSymptom(s)}
+                  onClick={() => toggleSymptom(s.value)}
                   className={cn(
                     "px-4 py-2 border-2 border-ink rounded-full font-sans text-base transition-all",
                     active
@@ -114,7 +140,7 @@ export function JournalForm({
                       : "bg-surface text-ink shadow-retro-sm press-retro"
                   )}
                 >
-                  {s}
+                  {s.label}
                 </button>
               );
             })}
@@ -139,12 +165,21 @@ export function JournalForm({
               </span>
             </div>
           </div>
+          {error && (
+            <p className="font-sans text-xs text-danger mt-3 px-1">{error}</p>
+          )}
         </section>
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 bg-surface border-t-2 border-ink px-5 py-4 z-40 pb-[max(env(safe-area-inset-bottom),16px)]">
-        <Button size="lg" className="w-full">
-          SIMPAN JURNAL
+        <Button
+          size="lg"
+          className="w-full"
+          type="button"
+          onClick={handleSave}
+          disabled={pending}
+        >
+          {pending ? "MENYIMPAN…" : "SIMPAN JURNAL"}
         </Button>
       </div>
     </>

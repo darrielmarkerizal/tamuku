@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { StepIndicator } from "@/components/step-indicator";
@@ -6,6 +8,7 @@ interface OnboardingShellProps {
   step: number;
   backHref?: string;
   showSkip?: boolean;
+  onSkip?: () => void;
   children: React.ReactNode;
 }
 
@@ -13,6 +16,7 @@ export function OnboardingShell({
   step,
   backHref,
   showSkip = true,
+  onSkip,
   children,
 }: OnboardingShellProps) {
   return (
@@ -33,12 +37,22 @@ export function OnboardingShell({
         <StepIndicator total={4} current={step} />
 
         {showSkip ? (
-          <Link
-            href="/dashboard"
-            className="font-display text-base font-extrabold text-primary-strong uppercase active:scale-95 px-2 py-1"
-          >
-            Lewati
-          </Link>
+          onSkip ? (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="font-display text-base font-extrabold text-primary-strong uppercase active:scale-95 px-2 py-1"
+            >
+              Lewati
+            </button>
+          ) : (
+            <Link
+              href="/dashboard"
+              className="font-display text-base font-extrabold text-primary-strong uppercase active:scale-95 px-2 py-1"
+            >
+              Lewati
+            </Link>
+          )
         ) : (
           <span className="size-10" />
         )}

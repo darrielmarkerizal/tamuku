@@ -12,77 +12,209 @@ datasource db {
 enum TtdStatus {
   WEEKLY_ROUTINE       // minum TTD di hari biasa (sekali seminggu)
   MENSTRUATION_ROUTINE // minum TTD saat haid (setiap hari)
-  STOCK_ADDED          // penambahan stok pil
 }
 
-// ─── Models ──────────────────────────────────────────────────────────────────
+enum InventoryReason {
+  CONSUMED   // -1 saat log TTD
+  RECEIVED   // +N saat tambah stok
+  CORRECTION // koreksi manual (bisa +/-)
+}
+
+enum MenstruationSource {
+  MANUAL     // dicatat sendiri oleh user
+  AUTO_CLOSE // ditutup otomatis oleh cron
+}
+
+enum Mood {
+  HAPPY
+  CALM
+  SAD
+  ANGRY
+  TIRED
+  ANXIOUS
+}
+
+enum Symptom {
+  CRAMP
+  HEADACHE
+  BLOATING
+  ACNE
+  FATIGUE
+  BACKPAIN
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
 
 model User {
-  id                   String               @id @default(uuid()) @db.Uuid
+  id                   String    @id @default(uuid()) @db.Uuid
+  username             String    @unique
+  password             String    // bcrypt hash
   name                 String?
-  username             String               @unique
-  password             String
-  school               String?              // dari form register, opsional
-  class_name           String?              // dari form register, opsional
-  inventory_ttd        Int                  @default(0)
-  badges               String[]             @default([])
-  onboarding_completed Boolean              @default(false)
+  email                String?
+  school               String?
+  class_name           String?
+  birth_date           DateTime? @db.Date
+
+  // Inventory TTD (self-managed)
+  inventory_ttd        Int       @default(0)
+
+  // Gamifikasi
+  badges               String[]  @default([])       // slug badge yang sudah diraih
+  streak_current       Int       @default(0)        // minggu berturut sekarang
+  streak_longest       Int       @default(0)        // rekor pribadi
+  streak_last_week_iso String?                      // "2026-W28" — patokan streak
+
+  // Edukasi
+  seen_flashcards      String[]  @default([])       // id flashcard yang sudah tampil
+
+  // Consent & onboarding
+  consent_accepted_at  DateTime?
+  guardian_aware       Boolean   @default(false)
+  onboarding_completed Boolean   @default(false)
+
+  // Aktivitas
+  last_login_at        DateTime?
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?                    // soft delete
+
   menstruationLogs     MenstruationLog[]
   ttdLogs              TtdLog[]
+  inventoryAdjustments InventoryAdjustment[]
   journalLogs          JournalLog[]
   notificationSetting  NotificationSetting?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  pushSubscriptions    PushSubscription[]
+  idempotencyKeys      IdempotencyKey[]
+
+  @@index([deletedAt])
+  @@index([last_login_at])
 }
+
+// ─── Menstruation ────────────────────────────────────────────────────────────
 
 model MenstruationLog {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @db.Uuid
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  start_date   DateTime
-  end_date     DateTime?
-  cycle_length Int?      // dikalkulasi otomatis saat siklus baru dimulai
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @db.Uuid
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  start_date    DateTime           @db.Date
+  end_date      DateTime?          @db.Date         // null = sedang berlangsung
+  cycle_length  Int?                                // hari sejak start sebelumnya (utk SMA)
+  period_length Int?                                // end - start (hari)
+  source        MenstruationSource @default(MANUAL)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Invariant: maksimal 1 log per user dengan end_date = null (enforce di app layer)
+  @@index([userId, start_date])
+  @@index([userId, end_date])
 }
 
-// log_date dipakai untuk semua status: konsumsi TTD & penambahan stok
+// ─── TTD Consumption ─────────────────────────────────────────────────────────
+// Khusus log konsumsi. Perubahan stok masuk ke InventoryAdjustment.
+
 model TtdLog {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @db.Uuid
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  log_date           DateTime  @db.Date
+  status             TtdStatus
+  flashcard_shown_id String?                        // referensi ke flashcard yg muncul
+  createdAt          DateTime  @default(now())
+
+  @@unique([userId, log_date])                      // cegah double-log per hari
+  @@index([userId, log_date])
+}
+
+// ─── Inventory Audit Trail ───────────────────────────────────────────────────
+// Setiap perubahan inventory_ttd punya jejak di sini.
+
+model InventoryAdjustment {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @db.Uuid
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  delta     Int                                     // +N = tambah, -N = kurang
+  reason    InventoryReason
+  note      String?
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ─── Journal ─────────────────────────────────────────────────────────────────
+
+model JournalLog {
   id        String    @id @default(uuid()) @db.Uuid
   userId    String    @db.Uuid
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  log_date  DateTime
-  status    TtdStatus
-  quantity  Int       @default(1) // jumlah pil (STOCK_ADDED bisa > 1)
+  log_date  DateTime  @db.Date
+  mood      Mood?
+  symptoms  Symptom[] @default([])
+  notes     String?   @db.VarChar(280)
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, log_date])                      // 1 entri per user per tanggal
+  @@index([userId, log_date])
 }
 
-// Satu entri per user per tanggal — upsert berdasarkan userId + log_date di app layer
-model JournalLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  log_date  DateTime
-  mood      String?  // nilai: happy | calm | sad | angry | tired | anxious
-  symptoms  String[] @default([]) // pilihan: Kram, Sakit kepala, Kembung, Jerawat, Lemas, Sakit pinggang
-  notes     String?  // max 280 karakter, divalidasi di app layer
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// ─── Notification Preferences ────────────────────────────────────────────────
 
-// Satu setting per user (one-to-one)
 model NotificationSetting {
   id                String   @id @default(uuid()) @db.Uuid
   userId            String   @unique @db.Uuid
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   enabled           Boolean  @default(true)
-  reminder_hour     Int      @default(7)
+
+  // Jam pengingat (WITA)
+  reminder_hour     Int      @default(19)           // 19:00 default
   reminder_minute   Int      @default(0)
-  days_of_week      String[] @default(["sen", "sel", "rab", "kam", "jum", "sab", "min"])
-  ttd_daily         Boolean  @default(true)
-  ttd_weekly        Boolean  @default(true)
-  period_start      Boolean  @default(true)
-  period_prediction Boolean  @default(true)
+
+  // Hari pengingat mingguan TTD (0=Minggu, 1=Senin, ..., 5=Jumat default, 6=Sabtu)
+  weekly_day        Int      @default(5)
+
+  // Toggle per kategori
+  ttd_daily         Boolean  @default(true)         // saat haid
+  ttd_weekly        Boolean  @default(true)         // rutin mingguan
+  period_start      Boolean  @default(true)         // auto-close haid
+  period_prediction Boolean  @default(true)         // 2 hari sebelum prediksi
+  low_stock         Boolean  @default(true)
+  badge_earned      Boolean  @default(true)
+
+  // Quiet hours (jam-mulai s.d. jam-akhir, tidak kirim push)
+  quiet_start_hour  Int      @default(21)
+  quiet_end_hour    Int      @default(6)
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// ─── Web Push Subscription ───────────────────────────────────────────────────
+
+model PushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique                        // URL push service
+  p256dh     String                                  // public key client
+  auth       String                                  // auth secret
+  user_agent String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Offline Sync Idempotency ────────────────────────────────────────────────
+// Cegah replay saat outbox flush dua kali (dari device sama / device berbeda).
+
+model IdempotencyKey {
+  key       String   @id                             // UUID v7 dari client
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])                               // cron cleanup > 30 hari
 }

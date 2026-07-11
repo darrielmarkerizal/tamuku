@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
+import { addStockAction } from "@/lib/ttd/actions";
 
 const QUICK = [
   { value: 4, label: "+4", hint: "(1 STRIP)", tone: "bg-accent-yellow" },
@@ -14,7 +16,30 @@ const QUICK = [
 ];
 
 export default function TambahStokTtdPage() {
+  const router = useRouter();
   const [pills, setPills] = useState(4);
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function handleSubmit() {
+    setError(null);
+    if (pills < 1) {
+      setError("Jumlah pil harus minimal 1.");
+      return;
+    }
+    const fd = new FormData();
+    fd.set("pills", String(pills));
+    fd.set("note", note);
+    startTransition(async () => {
+      const res = await addStockAction(fd);
+      if (res.ok) {
+        router.push("/ttd");
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col justify-end bg-ink/60">
@@ -69,7 +94,7 @@ export default function TambahStokTtdPage() {
               <button
                 key={q.value}
                 type="button"
-                onClick={() => setPills(q.value)}
+                onClick={() => setPills((p) => p + q.value)}
                 className={cn(
                   "w-full border-2 border-ink shadow-retro py-4 rounded-[12px] font-mono text-[11px] font-bold text-ink uppercase tracking-wider press-retro flex justify-center items-center gap-2",
                   q.tone
@@ -80,19 +105,37 @@ export default function TambahStokTtdPage() {
             ))}
           </div>
 
-          <Field className="mb-8">
+          <Field className="mb-6">
             <Label htmlFor="catatan">Catatan (opsional)</Label>
-            <Input id="catatan" placeholder="Dari kakak UKS, dari apotek, dll." />
+            <Input
+              id="catatan"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Dari kakak UKS, dari apotek, dll."
+              maxLength={120}
+            />
           </Field>
+
+          {error && (
+            <div className="bg-pink-cream border-2 border-danger rounded-[8px] px-3 py-2 font-sans text-sm text-danger mb-6">
+              {error}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <Link href="/ttd" className="flex-1">
-              <Button variant="soft" size="lg" className="w-full">
+              <Button variant="soft" size="lg" className="w-full" type="button">
                 BATAL
               </Button>
             </Link>
-            <Button size="lg" className="flex-1">
-              SIMPAN
+            <Button
+              size="lg"
+              className="flex-1"
+              type="button"
+              onClick={handleSubmit}
+              disabled={pending || pills < 1}
+            >
+              {pending ? "MENYIMPAN…" : "SIMPAN"}
             </Button>
           </div>
         </div>

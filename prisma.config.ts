@@ -6,10 +6,9 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  // URL untuk migrate — bypass PgBouncer, langsung ke Postgres
   datasource: {
-    // Runtime queries via PgBouncer (port 6432)
-    url: process.env["DATABASE_URL"],
-    // Migrations bypass PgBouncer, langsung ke PostgreSQL (port 5432)
-    directUrl: process.env["DIRECT_URL"],
+    url: process.env["DIRECT_URL"],
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

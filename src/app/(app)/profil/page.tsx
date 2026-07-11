@@ -6,7 +6,6 @@ import {
   Footprints,
   Info,
   Lock,
-  LogOut,
   Pencil,
   Bell,
   RefreshCw,
@@ -19,6 +18,8 @@ import {
 } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/cn";
+import { requireUser } from "@/lib/auth/current-user";
+import { LogoutButton } from "./logout-button";
 
 type Stat = {
   Icon?: LucideIcon;
@@ -27,11 +28,6 @@ type Stat = {
   label: string;
 };
 
-const STATS: Stat[] = [
-  { emoji: "🔥", value: "3", label: "MINGGU STREAK" },
-  { Icon: CheckCircle2, value: "92%", label: "KEPATUHAN 30H" },
-  { Icon: CalendarDays, value: "12", label: "SIKLUS DICATAT" },
-];
 
 type Badge = {
   slug: string;
@@ -64,7 +60,16 @@ const SETTINGS: Setting[] = [
   { Icon: Info, label: "Tentang Tamuku", href: "/profil/tentang" },
 ];
 
-export default function ProfilPage() {
+export default async function ProfilPage() {
+  const user = await requireUser();
+  const stats: Stat[] = [
+    { emoji: "🔥", value: String(user.streak_current), label: "MINGGU STREAK" },
+    { Icon: CheckCircle2, value: "—", label: "KEPATUHAN 30H" },
+    { Icon: CalendarDays, value: "—", label: "SIKLUS DICATAT" },
+  ];
+  const schoolLine = [user.school, user.class_name ? `Kelas ${user.class_name}` : null]
+    .filter(Boolean)
+    .join(" • ");
   return (
     <>
       <header className="px-5 pt-6 pb-2 flex justify-between items-center">
@@ -87,19 +92,21 @@ export default function ProfilPage() {
           </div>
           <div className="flex flex-col z-10 min-w-0">
             <h2 className="font-display text-2xl font-extrabold text-ink mb-2 truncate">
-              Nisa Fredlina
+              {user.name ?? user.username}
             </h2>
-            <div className="inline-flex bg-surface border-2 border-ink rounded-full px-3 py-1 shadow-retro-sm w-max max-w-full">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink truncate">
-                SMP 1 Sepaku • Kelas 8A
-              </span>
-            </div>
+            {schoolLine && (
+              <div className="inline-flex bg-surface border-2 border-ink rounded-full px-3 py-1 shadow-retro-sm w-max max-w-full">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink truncate">
+                  {schoolLine}
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
         <section className="w-full overflow-x-visible">
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x [&::-webkit-scrollbar]:hidden">
-            {STATS.map((s) => (
+            {stats.map((s) => (
               <div
                 key={s.label}
                 className="min-w-[130px] bg-surface border-2 border-ink rounded-[12px] shadow-retro-sm p-4 flex flex-col items-center justify-center text-center gap-2 snap-start"
@@ -167,15 +174,7 @@ export default function ProfilPage() {
             </Link>
           ))}
 
-          <button
-            type="button"
-            className="w-full bg-surface border-2 border-ink rounded-[12px] shadow-retro p-4 flex items-center justify-between press-retro mt-3"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="size-5 text-danger" strokeWidth={2.5} />
-              <span className="font-sans text-base text-danger font-bold">Keluar</span>
-            </div>
-          </button>
+          <LogoutButton />
         </section>
 
         <div className="w-full text-center py-4 mt-2">

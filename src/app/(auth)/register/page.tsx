@@ -1,21 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
+import { registerAction, type AuthState } from "@/lib/auth/actions";
+
+const INITIAL: AuthState = {};
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    // Tahap 4: server action create user. Sekarang mock click-through ke onboarding.
-    router.push("/onboarding");
-  }
+  const [state, formAction, pending] = useActionState(registerAction, INITIAL);
 
   return (
     <div className="max-w-[390px] w-full mx-auto min-h-dvh flex flex-col relative px-5 pt-8 pb-12">
@@ -39,15 +35,55 @@ export default function RegisterPage() {
       </div>
 
       <main className="bg-surface border-2 border-ink rounded-[12px] p-5 shadow-retro-lg mb-8">
-        <form id="register-form" className="flex flex-col gap-5" onSubmit={handleSubmit}>
+        <form id="register-form" action={formAction} className="flex flex-col gap-5">
           <Field>
-            <Label htmlFor="fullName">Nama Lengkap</Label>
-            <Input id="fullName" name="fullName" placeholder="Mis. Nisa Fredlina" required />
+            <Label htmlFor="name">Nama Lengkap</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Mis. Nisa Fredlina"
+              required
+              aria-invalid={!!state?.fieldErrors?.name}
+            />
+            {state?.fieldErrors?.name && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.name}
+              </p>
+            )}
           </Field>
 
           <Field>
             <Label htmlFor="username">Username</Label>
-            <Input id="username" name="username" placeholder="min. 4 huruf/angka" required />
+            <Input
+              id="username"
+              name="username"
+              placeholder="min. 4 huruf/angka"
+              required
+              autoComplete="username"
+              aria-invalid={!!state?.fieldErrors?.username}
+            />
+            {state?.fieldErrors?.username && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.username}
+              </p>
+            )}
+          </Field>
+
+          <Field>
+            <Label htmlFor="email">Email (opsional)</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="nama@email.com"
+              autoComplete="email"
+              aria-invalid={!!state?.fieldErrors?.email}
+            />
+            {state?.fieldErrors?.email && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.email}
+              </p>
+            )}
           </Field>
 
           <Field>
@@ -56,8 +92,8 @@ export default function RegisterPage() {
           </Field>
 
           <Field>
-            <Label htmlFor="class">Kelas (opsional)</Label>
-            <Input id="class" name="class" placeholder="8A" />
+            <Label htmlFor="class_name">Kelas (opsional)</Label>
+            <Input id="class_name" name="class_name" placeholder="8A" />
           </Field>
 
           <Field>
@@ -67,9 +103,11 @@ export default function RegisterPage() {
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="min. 6 karakter"
                 className="pr-12"
                 required
+                autoComplete="new-password"
+                aria-invalid={!!state?.fieldErrors?.password}
               />
               <button
                 type="button"
@@ -84,19 +122,51 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {state?.fieldErrors?.password && (
+              <p className="font-sans text-xs text-danger px-1">
+                {state.fieldErrors.password}
+              </p>
+            )}
           </Field>
 
           <label className="flex items-start gap-3 cursor-pointer mt-3 group select-none">
-            <input type="checkbox" required className="peer sr-only" />
+            <input
+              type="checkbox"
+              name="guardian_aware"
+              required
+              className="peer sr-only"
+              aria-invalid={!!state?.fieldErrors?.guardian_aware}
+            />
             <span className="size-6 shrink-0 bg-surface border-2 border-ink rounded-[6px] shadow-retro-sm flex items-center justify-center peer-checked:bg-primary peer-checked:[&>svg]:block mt-0.5">
-              <svg className="size-4 text-white hidden" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                className="size-4 text-white hidden"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M5 13l4 4L19 7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </span>
             <span className="font-sans text-sm text-ink leading-tight">
               Aku sudah memberi tahu orang tua/wali bahwa aku pakai aplikasi ini.
             </span>
           </label>
+          {state?.fieldErrors?.guardian_aware && (
+            <p className="font-sans text-xs text-danger px-1 -mt-2">
+              {state.fieldErrors.guardian_aware}
+            </p>
+          )}
+
+          {state?.error && (
+            <div className="bg-pink-cream border-2 border-danger rounded-[8px] px-3 py-2 font-sans text-sm text-danger">
+              {state.error}
+            </div>
+          )}
         </form>
       </main>
 
@@ -104,8 +174,14 @@ export default function RegisterPage() {
         Datamu disimpan pribadi dan tidak dibagikan ke siapa pun.
       </p>
 
-      <Button type="submit" form="register-form" size="lg" className="w-full mb-8">
-        DAFTAR SEKARANG
+      <Button
+        type="submit"
+        form="register-form"
+        size="lg"
+        className="w-full mb-8"
+        disabled={pending}
+      >
+        {pending ? "MENDAFTAR…" : "DAFTAR SEKARANG"}
       </Button>
 
       <div className="text-center font-sans text-text-muted mt-auto">

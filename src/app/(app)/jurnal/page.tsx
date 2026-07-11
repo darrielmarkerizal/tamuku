@@ -1,30 +1,56 @@
 import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Mascot } from "@/components/mascot";
+import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
+import {
+  addDays,
+  formatDayShort,
+  formatShort,
+  isSameLocalDay,
+  today,
+  toIsoDate,
+} from "@/lib/date";
 
-type Entry = {
-  date: string;
-  emoji: string;
-  symptoms: string[];
-  tone: "yellow" | "pink" | "mint" | "peach";
+const MOOD_EMOJI: Record<string, { emoji: string; tone: string }> = {
+  HAPPY: { emoji: "😀", tone: "bg-accent-mint" },
+  CALM: { emoji: "😌", tone: "bg-pink-soft" },
+  SAD: { emoji: "😢", tone: "bg-pink-cream" },
+  ANGRY: { emoji: "😠", tone: "bg-accent-peach" },
+  TIRED: { emoji: "😩", tone: "bg-accent-yellow" },
+  ANXIOUS: { emoji: "😟", tone: "bg-pink-soft" },
 };
 
-const ENTRIES: Entry[] = [
-  { date: "KAM, 25 JUN", emoji: "😌", symptoms: ["Kram", "Lemas"], tone: "pink" },
-  { date: "RAB, 24 JUN", emoji: "😴", symptoms: ["Lemas", "Pusing"], tone: "yellow" },
-  { date: "SEL, 23 JUN", emoji: "😠", symptoms: ["Sensitif"], tone: "peach" },
-  { date: "SEN, 22 JUN", emoji: "😭", symptoms: ["Sedih", "Kram"], tone: "pink" },
-  { date: "MIN, 21 JUN", emoji: "😄", symptoms: ["Berenergi"], tone: "mint" },
-];
-
-const TONE_BG: Record<Entry["tone"], string> = {
-  yellow: "bg-accent-yellow",
-  pink: "bg-pink-soft",
-  mint: "bg-accent-mint",
-  peach: "bg-accent-peach",
+const SYMPTOM_LABEL: Record<string, string> = {
+  CRAMP: "Kram",
+  HEADACHE: "Sakit kepala",
+  BLOATING: "Kembung",
+  ACNE: "Jerawat",
+  FATIGUE: "Lemas",
+  BACKPAIN: "Sakit pinggang",
 };
 
-export default function JurnalListPage() {
+export default async function JurnalListPage() {
+  const user = await requireUser();
+  const todayDate = today();
+  const from = addDays(todayDate, -13);
+
+  const entries = await db.journalLog.findMany({
+    where: { userId: user.id, log_date: { gte: from, lte: todayDate } },
+    orderBy: { log_date: "desc" },
+    select: {
+      log_date: true,
+      mood: true,
+      symptoms: true,
+      notes: true,
+    },
+  });
+
+  const todaysEntry = entries.find((e) => isSameLocalDay(e.log_date, todayDate));
+  const historicalEntries = entries.filter(
+    (e) => !isSameLocalDay(e.log_date, todayDate)
+  );
+
   return (
     <>
       <header className="flex items-center px-5 py-4 sticky top-0 bg-bg z-30">
@@ -51,17 +77,21 @@ export default function JurnalListPage() {
                 HARI INI
               </span>
               <h2 className="font-display text-2xl font-extrabold text-ink mb-1">
-                Belum nulis hari ini
+                {todaysEntry
+                  ? "Sudah nulis hari ini ✨"
+                  : "Belum nulis hari ini"}
               </h2>
               <p className="font-sans text-base text-ink mb-6">
-                Jurnal kamu bantu lihat pola, lho!
+                {todaysEntry
+                  ? "Klik untuk edit atau tambah catatan."
+                  : "Jurnal kamu bantu lihat pola, lho!"}
               </p>
             </div>
             <Link
               href="/jurnal/today"
               className="block w-full bg-primary text-white text-center font-mono text-[11px] font-bold uppercase tracking-widest py-4 px-4 rounded-[12px] border-2 border-ink shadow-retro press-retro"
             >
-              ISI JURNAL HARI INI
+              {todaysEntry ? "EDIT JURNAL HARI INI" : "ISI JURNAL HARI INI"}
             </Link>
           </div>
         </section>
@@ -73,35 +103,66 @@ export default function JurnalListPage() {
         </div>
 
         <div className="flex flex-col gap-3 px-5 mb-8 w-full">
-          {ENTRIES.map((e, i) => (
-            <Link
-              key={i}
-              href={`/jurnal/${e.date.toLowerCase().replace(/[, ]+/g, "-")}`}
-              className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-3 flex items-center gap-4 press-retro"
-            >
-              <div
-                className={`size-14 shrink-0 ${TONE_BG[e.tone]} border-2 border-ink rounded-[8px] flex items-center justify-center text-3xl shadow-retro-sm`}
-              >
-                {e.emoji}
-              </div>
-              <div className="flex-1 flex flex-col justify-center min-w-0">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mb-2">
-                  {e.date}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {e.symptoms.map((s) => (
-                    <span
-                      key={s}
-                      className="bg-pink-soft border-2 border-ink rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <ChevronRight className="size-5 text-text-muted shrink-0" strokeWidth={2.5} />
-            </Link>
-          ))}
+          {historicalEntries.length === 0 ? (
+            <div className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-8 text-center">
+              <p className="font-display text-lg font-extrabold uppercase text-ink mb-2">
+                Belum ada jurnal
+              </p>
+              <p className="font-sans text-sm text-text-muted">
+                Mulai catat hari ini biar Hemo bisa bantu lihat polamu.
+              </p>
+            </div>
+          ) : (
+            historicalEntries.map((e) => {
+              const moodInfo = e.mood
+                ? MOOD_EMOJI[e.mood]
+                : { emoji: "•", tone: "bg-surface" };
+              const iso = toIsoDate(e.log_date);
+              return (
+                <Link
+                  key={iso}
+                  href={`/jurnal/${iso}`}
+                  className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-3 flex items-center gap-4 press-retro"
+                >
+                  <div
+                    className={`size-14 shrink-0 ${moodInfo.tone} border-2 border-ink rounded-[8px] flex items-center justify-center text-3xl shadow-retro-sm`}
+                  >
+                    {moodInfo.emoji}
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center min-w-0">
+                    <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mb-2">
+                      {formatDayShort(e.log_date)}, {formatShort(e.log_date)}
+                    </h4>
+                    {e.symptoms.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {e.symptoms.slice(0, 3).map((s) => (
+                          <span
+                            key={s}
+                            className="bg-pink-soft border-2 border-ink rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink"
+                          >
+                            {SYMPTOM_LABEL[s] ?? s}
+                          </span>
+                        ))}
+                        {e.symptoms.length > 3 && (
+                          <span className="font-mono text-[10px] text-text-muted">
+                            +{e.symptoms.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    ) : e.notes ? (
+                      <p className="font-sans text-xs text-text-muted line-clamp-1">
+                        {e.notes}
+                      </p>
+                    ) : null}
+                  </div>
+                  <ChevronRight
+                    className="size-5 text-text-muted shrink-0"
+                    strokeWidth={2.5}
+                  />
+                </Link>
+              );
+            })
+          )}
         </div>
       </main>
     </>

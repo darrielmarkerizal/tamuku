@@ -1,21 +1,49 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding-shell";
 import { Button } from "@/components/ui/button";
 import { RetroToggle } from "@/components/retro-toggle";
 import { TimePicker } from "@/components/time-picker";
 import { cn } from "@/lib/cn";
+import { completeOnboardingAction } from "@/lib/auth/actions";
+import { clearDraft, readDraft } from "@/lib/onboarding-storage";
 
-const DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+// Sesuai NotificationSetting.weekly_day (0=Minggu ... 6=Sabtu)
+const DAYS = [
+  { label: "Sen", value: 1 },
+  { label: "Sel", value: 2 },
+  { label: "Rab", value: 3 },
+  { label: "Kam", value: 4 },
+  { label: "Jum", value: 5 },
+  { label: "Sab", value: 6 },
+  { label: "Min", value: 0 },
+];
 
 export default function OnboardingStep4Page() {
-  const [day, setDay] = useState("Jum");
+  const [weeklyDay, setWeeklyDay] = useState(5);
   const [hour, setHour] = useState(19);
   const [minute, setMinute] = useState(0);
   const [notifEnabled, setNotifEnabled] = useState(true);
+  const [pending, startTransition] = useTransition();
+
+  function handleFinish() {
+    const draft = readDraft();
+    const fd = new FormData();
+    fd.set("weekly_day", String(weeklyDay));
+    fd.set("reminder_hour", String(hour));
+    fd.set("reminder_minute", String(minute));
+    fd.set("enabled", notifEnabled ? "on" : "false");
+    if (draft.periodStartIso) fd.set("period_start_iso", draft.periodStartIso);
+    if (typeof draft.initialTtd === "number") {
+      fd.set("initial_ttd", String(draft.initialTtd));
+    }
+    startTransition(() => {
+      clearDraft();
+      completeOnboardingAction(fd);
+    });
+  }
 
   return (
     <OnboardingShell step={4} backHref="/onboarding/3" showSkip={false}>
@@ -34,18 +62,18 @@ export default function OnboardingStep4Page() {
         </h2>
         <div className="flex gap-2 overflow-x-auto pb-4 -mx-5 px-5 snap-x [&::-webkit-scrollbar]:hidden">
           {DAYS.map((d) => {
-            const active = d === day;
+            const active = d.value === weeklyDay;
             return (
               <button
-                key={d}
+                key={d.value}
                 type="button"
-                onClick={() => setDay(d)}
+                onClick={() => setWeeklyDay(d.value)}
                 className={cn(
                   "snap-center shrink-0 size-12 flex items-center justify-center border-2 border-ink rounded-[8px] shadow-retro-sm press-retro font-mono text-[11px] font-bold uppercase tracking-wider",
                   active ? "bg-primary text-white" : "bg-surface text-ink"
                 )}
               >
-                {d}
+                {d.label}
               </button>
             );
           })}
@@ -78,12 +106,16 @@ export default function OnboardingStep4Page() {
       </section>
 
       <section className="pt-4 pb-2">
-        <Link href="/dashboard" className="block">
-          <Button size="lg" className="w-full">
-            <Check className="size-5" strokeWidth={3} />
-            <span>SELESAI</span>
-          </Button>
-        </Link>
+        <Button
+          type="button"
+          size="lg"
+          className="w-full"
+          disabled={pending}
+          onClick={handleFinish}
+        >
+          <Check className="size-5" strokeWidth={3} />
+          <span>{pending ? "MENYIMPAN…" : "SELESAI"}</span>
+        </Button>
       </section>
     </OnboardingShell>
   );
