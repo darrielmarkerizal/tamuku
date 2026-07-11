@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { Mascot } from "@/components/mascot";
@@ -13,6 +14,7 @@ const INITIAL: AuthState = {};
 export default function LoginPage() {
   const { isInstallable, promptInstall } = usePwaInstall();
   const [state, formAction, pending] = useActionState(loginAction, INITIAL);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <>
@@ -55,15 +57,32 @@ export default function LoginPage() {
 
           <Field>
             <Label htmlFor="password">PASSWORD</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-              aria-invalid={!!state?.fieldErrors?.password}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="pr-12"
+                required
+                aria-invalid={!!state?.fieldErrors?.password}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={
+                  showPassword ? "Sembunyikan password" : "Tampilkan password"
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-ink"
+              >
+                {showPassword ? (
+                  <Eye className="size-5" strokeWidth={2.5} />
+                ) : (
+                  <EyeOff className="size-5" strokeWidth={2.5} />
+                )}
+              </button>
+            </div>
             {state?.fieldErrors?.password && (
               <p className="font-sans text-xs text-danger px-1">
                 {state.fieldErrors.password}
@@ -97,7 +116,8 @@ export default function LoginPage() {
               className="mt-2 w-full bg-accent-mint hover:bg-[#7bc8a7] text-ink"
               onClick={promptInstall}
             >
-              ⬇️ INSTALL APLIKASI
+              <Download className="size-5" strokeWidth={2.5} />
+              INSTALL APLIKASI
             </Button>
           )}
         </form>

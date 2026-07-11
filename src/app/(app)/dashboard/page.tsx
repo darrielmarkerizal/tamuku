@@ -1,21 +1,14 @@
 import Link from "next/link";
+import { Flame, Hand } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Mascot } from "@/components/mascot";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { daysBetween, formatShort, today } from "@/lib/date";
 import { isMenstruationActive } from "@/lib/period/sma";
+import { MOODS } from "@/lib/mood-icons";
 import { PeriodButton } from "./period-button";
 import { TtdButton } from "./ttd-button";
-
-const moods = [
-  { emoji: "😀", label: "Senang" },
-  { emoji: "😌", label: "Tenang" },
-  { emoji: "😢", label: "Sedih" },
-  { emoji: "😠", label: "Kesal" },
-  { emoji: "😩", label: "Lelah" },
-  { emoji: "😟", label: "Cemas" },
-];
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -51,7 +44,18 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <AppHeader greeting={`HALO, ${firstName} 👋`} hasUnread />
+      <AppHeader
+        greeting={
+          <>
+            <span>HALO, {firstName}</span>
+            <Hand
+              className="size-6 text-primary-strong"
+              strokeWidth={2.5}
+            />
+          </>
+        }
+        hasUnread
+      />
 
       <main className="px-5 flex flex-col gap-5 mt-2">
         <StatusCard
@@ -168,8 +172,8 @@ function MascotCard() {
 function StreakCard({ streak }: { streak: number }) {
   return (
     <div className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-4 flex flex-col items-center justify-center text-center">
-      <div className="flex items-baseline gap-1">
-        <span className="text-3xl">🔥</span>
+      <div className="flex items-center gap-1">
+        <Flame className="size-8 text-primary-strong" strokeWidth={2.5} />
         <span className="font-mono text-5xl font-bold text-ink leading-none tracking-tighter">
           {streak}
         </span>
@@ -196,19 +200,19 @@ function JournalQuickCard() {
         </Link>
       </div>
       <div className="flex gap-2 justify-between">
-        {moods.map(({ emoji, label }) => (
+        {MOODS.map(({ Icon, slug, labelUpper, tone }) => (
           <Link
-            key={label}
-            href={`/jurnal/todayDate?mood=${encodeURIComponent(label.toLowerCase())}`}
-            aria-label={`Catat mood: ${label}`}
-            className="size-10 bg-pink-soft rounded-[6px] border-2 border-ink flex items-center justify-center text-xl press-retro shadow-retro-sm"
+            key={slug}
+            href={`/jurnal/today?mood=${slug}`}
+            aria-label={`Catat mood: ${labelUpper}`}
+            className={`size-10 ${tone} rounded-[6px] border-2 border-ink flex items-center justify-center press-retro shadow-retro-sm`}
           >
-            {emoji}
+            <Icon className="size-5 text-ink" strokeWidth={2.5} />
           </Link>
         ))}
       </div>
       <Link
-        href="/jurnal/todayDate"
+        href="/jurnal/today"
         className="text-center font-sans text-sm font-bold text-primary-strong hover:underline"
       >
         Tambahkan catatan →

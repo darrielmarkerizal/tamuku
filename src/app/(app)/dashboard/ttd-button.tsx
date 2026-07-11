@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check } from "lucide-react";
 import { logTtdAction } from "@/lib/ttd/actions";
 
 interface Props {
@@ -25,7 +26,6 @@ export function TtdButton({ alreadyLogged }: Props) {
   }
 
   const done = alreadyLogged || doneNow;
-  const label = done ? "SUDAH MINUM TTD HARI INI ✓" : "SUDAH MINUM TTD HARI INI";
 
   return (
     <div className="flex flex-col gap-2">
@@ -33,9 +33,12 @@ export function TtdButton({ alreadyLogged }: Props) {
         type="button"
         onClick={handleClick}
         disabled={pending || done}
-        className="w-full bg-accent-mint rounded-[8px] border-2 border-ink shadow-retro-sm py-3 px-4 font-display text-lg font-extrabold text-ink uppercase text-center press-retro disabled:opacity-70 disabled:pointer-events-none"
+        className="w-full bg-accent-mint rounded-[8px] border-2 border-ink shadow-retro-sm py-3 px-4 font-display text-lg font-extrabold text-ink uppercase text-center press-retro disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center gap-2"
       >
-        {pending ? "MENYIMPAN…" : label}
+        <span>{pending ? "MENYIMPAN…" : "SUDAH MINUM TTD HARI INI"}</span>
+        {done && !pending && (
+          <Check className="size-5" strokeWidth={3} aria-hidden="true" />
+        )}
       </button>
       {error && <p className="font-sans text-xs text-danger px-2">{error}</p>}
     </div>

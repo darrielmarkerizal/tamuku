@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 
 interface AppHeaderProps {
-  greeting: string;
+  greeting: React.ReactNode;
   hasUnread?: boolean;
 }
 
 export function AppHeader({ greeting, hasUnread = false }: AppHeaderProps) {
   return (
     <header className="px-5 pt-6 pb-4 flex justify-between items-center sticky top-0 bg-bg z-40">
-      <h1 className="font-display text-2xl font-extrabold uppercase tracking-wide text-ink">
+      <h1 className="font-display text-2xl font-extrabold uppercase tracking-wide text-ink flex items-center gap-2">
         {greeting}
       </h1>
       <div className="flex items-center gap-3">

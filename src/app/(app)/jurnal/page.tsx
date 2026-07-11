@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Minus, Sparkles } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
@@ -11,15 +11,7 @@ import {
   today,
   toIsoDate,
 } from "@/lib/date";
-
-const MOOD_EMOJI: Record<string, { emoji: string; tone: string }> = {
-  HAPPY: { emoji: "😀", tone: "bg-accent-mint" },
-  CALM: { emoji: "😌", tone: "bg-pink-soft" },
-  SAD: { emoji: "😢", tone: "bg-pink-cream" },
-  ANGRY: { emoji: "😠", tone: "bg-accent-peach" },
-  TIRED: { emoji: "😩", tone: "bg-accent-yellow" },
-  ANXIOUS: { emoji: "😟", tone: "bg-pink-soft" },
-};
+import { MOOD_BY_VALUE } from "@/lib/mood-icons";
 
 const SYMPTOM_LABEL: Record<string, string> = {
   CRAMP: "Kram",
@@ -76,10 +68,18 @@ export default async function JurnalListPage() {
               <span className="inline-block bg-surface border-2 border-ink px-2 py-1 rounded-[6px] mb-3 font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
                 HARI INI
               </span>
-              <h2 className="font-display text-2xl font-extrabold text-ink mb-1">
-                {todaysEntry
-                  ? "Sudah nulis hari ini ✨"
-                  : "Belum nulis hari ini"}
+              <h2 className="font-display text-2xl font-extrabold text-ink mb-1 flex items-center gap-2">
+                {todaysEntry ? (
+                  <>
+                    <span>Sudah nulis hari ini</span>
+                    <Sparkles
+                      className="size-5 text-primary-strong"
+                      strokeWidth={2.5}
+                    />
+                  </>
+                ) : (
+                  "Belum nulis hari ini"
+                )}
               </h2>
               <p className="font-sans text-base text-ink mb-6">
                 {todaysEntry
@@ -114,10 +114,12 @@ export default async function JurnalListPage() {
             </div>
           ) : (
             historicalEntries.map((e) => {
-              const moodInfo = e.mood
-                ? MOOD_EMOJI[e.mood]
-                : { emoji: "•", tone: "bg-surface" };
+              const meta =
+                e.mood &&
+                MOOD_BY_VALUE[e.mood as keyof typeof MOOD_BY_VALUE];
               const iso = toIsoDate(e.log_date);
+              const MoodIcon = meta?.Icon ?? Minus;
+              const tone = meta?.tone ?? "bg-surface";
               return (
                 <Link
                   key={iso}
@@ -125,9 +127,12 @@ export default async function JurnalListPage() {
                   className="bg-surface border-2 border-ink shadow-retro rounded-[12px] p-3 flex items-center gap-4 press-retro"
                 >
                   <div
-                    className={`size-14 shrink-0 ${moodInfo.tone} border-2 border-ink rounded-[8px] flex items-center justify-center text-3xl shadow-retro-sm`}
+                    className={`size-14 shrink-0 ${tone} border-2 border-ink rounded-[8px] flex items-center justify-center shadow-retro-sm`}
                   >
-                    {moodInfo.emoji}
+                    <MoodIcon
+                      className="size-7 text-ink"
+                      strokeWidth={2.5}
+                    />
                   </div>
                   <div className="flex-1 flex flex-col justify-center min-w-0">
                     <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mb-2">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { registerAction, type AuthState } from "@/lib/auth/actions";
@@ -138,19 +138,10 @@ export default function RegisterPage() {
               aria-invalid={!!state?.fieldErrors?.guardian_aware}
             />
             <span className="size-6 shrink-0 bg-surface border-2 border-ink rounded-[6px] shadow-retro-sm flex items-center justify-center peer-checked:bg-primary peer-checked:[&>svg]:block mt-0.5">
-              <svg
+              <Check
                 className="size-4 text-white hidden"
-                fill="none"
-                stroke="currentColor"
                 strokeWidth={3}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M5 13l4 4L19 7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              />
             </span>
             <span className="font-sans text-sm text-ink leading-tight">
               Aku sudah memberi tahu orang tua/wali bahwa aku pakai aplikasi ini.

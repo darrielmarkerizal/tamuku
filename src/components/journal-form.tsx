@@ -7,15 +7,7 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { upsertJournalAction } from "@/lib/journal/actions";
-
-const MOODS = [
-  { value: "HAPPY", emoji: "😀", label: "senang" },
-  { value: "CALM", emoji: "😌", label: "tenang" },
-  { value: "SAD", emoji: "😢", label: "sedih" },
-  { value: "ANGRY", emoji: "😠", label: "kesal" },
-  { value: "TIRED", emoji: "😩", label: "lelah" },
-  { value: "ANXIOUS", emoji: "😟", label: "cemas" },
-] as const;
+import { MOODS } from "@/lib/mood-icons";
 
 const SYMPTOMS = [
   { value: "CRAMP", label: "Kram" },
@@ -99,6 +91,7 @@ export function JournalForm({
           <div className="grid grid-cols-3 gap-3">
             {MOODS.map((m) => {
               const active = m.value === mood;
+              const Icon = m.Icon;
               return (
                 <button
                   key={m.value}
@@ -111,7 +104,11 @@ export function JournalForm({
                       : "bg-surface shadow-retro-sm press-retro"
                   )}
                 >
-                  <span className="text-3xl">{m.emoji}</span>
+                  <Icon
+                    className="size-8 text-ink"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
                     {m.label}
                   </span>

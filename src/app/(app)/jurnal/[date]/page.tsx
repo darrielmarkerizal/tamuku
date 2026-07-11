@@ -9,21 +9,12 @@ import {
   today,
   toIsoDate,
 } from "@/lib/date";
+import { MOOD_BY_SLUG } from "@/lib/mood-icons";
 
 interface Props {
   params: Promise<{ date: string }>;
   searchParams: Promise<{ mood?: string }>;
 }
-
-// Prefill mood dari query param (dari dashboard mood shortcut)
-const MOOD_ALIAS: Record<string, string> = {
-  senang: "HAPPY",
-  tenang: "CALM",
-  sedih: "SAD",
-  kesal: "ANGRY",
-  lelah: "TIRED",
-  cemas: "ANXIOUS",
-};
 
 export default async function JurnalDatePage({ params, searchParams }: Props) {
   const user = await requireUser();
@@ -46,7 +37,9 @@ export default async function JurnalDatePage({ params, searchParams }: Props) {
     select: { mood: true, symptoms: true, notes: true },
   });
 
-  const prefillMood = sp.mood ? MOOD_ALIAS[sp.mood.toLowerCase()] : undefined;
+  const prefillMood = sp.mood
+    ? MOOD_BY_SLUG[sp.mood.toLowerCase()]
+    : undefined;
 
   const dateLabel = `${formatDayShort(logDate)}, ${formatShort(logDate)}`.toUpperCase();
 

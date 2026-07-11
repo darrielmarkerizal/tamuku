@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Flame,
   Footprints,
+  Heart,
   Info,
   Lock,
   Pencil,
@@ -22,8 +23,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { LogoutButton } from "./logout-button";
 
 type Stat = {
-  Icon?: LucideIcon;
-  emoji?: string;
+  Icon: LucideIcon;
   value: string;
   label: string;
 };
@@ -63,7 +63,7 @@ const SETTINGS: Setting[] = [
 export default async function ProfilPage() {
   const user = await requireUser();
   const stats: Stat[] = [
-    { emoji: "🔥", value: String(user.streak_current), label: "MINGGU STREAK" },
+    { Icon: Flame, value: String(user.streak_current), label: "MINGGU STREAK" },
     { Icon: CheckCircle2, value: "—", label: "KEPATUHAN 30H" },
     { Icon: CalendarDays, value: "—", label: "SIKLUS DICATAT" },
   ];
@@ -111,11 +111,7 @@ export default async function ProfilPage() {
                 key={s.label}
                 className="min-w-[130px] bg-surface border-2 border-ink rounded-[12px] shadow-retro-sm p-4 flex flex-col items-center justify-center text-center gap-2 snap-start"
               >
-                {s.emoji ? (
-                  <span className="text-3xl">{s.emoji}</span>
-                ) : s.Icon ? (
-                  <s.Icon className="size-8 text-primary-strong" strokeWidth={2.5} />
-                ) : null}
+                <s.Icon className="size-8 text-primary-strong" strokeWidth={2.5} />
                 <div className="font-mono text-2xl font-bold text-ink">{s.value}</div>
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
                   {s.label}
@@ -179,7 +175,10 @@ export default async function ProfilPage() {
 
         <div className="w-full text-center py-4 mt-2">
           <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
-            Tamuku v1.0 • Buat Sepaku ❤️
+            <span className="inline-flex items-center gap-1.5">
+              Tamuku v1.0 • Buat Sepaku
+              <Heart className="size-3 text-primary-strong fill-primary-strong" strokeWidth={2.5} />
+            </span>
           </span>
         </div>
       </main>
