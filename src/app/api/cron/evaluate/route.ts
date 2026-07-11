@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { addDays, today } from "@/lib/date";
+import { addDays, daysBetween, today } from "@/lib/date";
 import { updateStreakForUser } from "@/lib/ttd/actions";
 import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
+import { sendPushToUser } from "@/lib/push/server";
 
 // Cron dijadwalkan lewat vercel.json. Guard:
 // - Header `x-vercel-cron` — otomatis di-set Vercel untuk cron internal
@@ -33,6 +34,36 @@ export async function GET(request: Request) {
 
   let streakUpdated = 0;
   let badgesAwarded = 0;
+  let periodsAutoClosed = 0;
+
+  // Auto-close period: end_date null, start_date > 10 hari lalu → close
+  const todayDate = today();
+  const cutoffClose = addDays(todayDate, -10);
+  const openLogs = await db.menstruationLog.findMany({
+    where: { end_date: null, start_date: { lt: cutoffClose } },
+    select: { id: true, userId: true, start_date: true },
+  });
+  for (const log of openLogs) {
+    const end = addDays(log.start_date, 7);
+    const period_length = daysBetween(log.start_date, end) + 1;
+    await db.menstruationLog.update({
+      where: { id: log.id },
+      data: {
+        end_date: end,
+        period_length,
+        source: "AUTO_CLOSE",
+      },
+    });
+    periodsAutoClosed++;
+    try {
+      await sendPushToUser(log.userId, {
+        title: "Haid ditutup otomatis",
+        body: "Kami tutup catatan haidmu — kamu bisa edit di kalender.",
+        url: "/kalender",
+        tag: "auto-close",
+      });
+    } catch {}
+  }
 
   for (const u of users) {
     try {
@@ -40,6 +71,16 @@ export async function GET(request: Request) {
       streakUpdated++;
       const newBadges = await evaluateBadgesForUser(u.id);
       badgesAwarded += newBadges.length;
+      if (newBadges.length > 0) {
+        try {
+          await sendPushToUser(u.id, {
+            title: `Kamu dapat lencana baru!`,
+            body: newBadges.join(", "),
+            url: "/profil",
+            tag: "badge",
+          });
+        } catch {}
+      }
     } catch (err) {
       console.error(`Cron eval failed for user ${u.id}:`, err);
     }
@@ -49,5 +90,6 @@ export async function GET(request: Request) {
     processed: users.length,
     streakUpdated,
     badgesAwarded,
+    periodsAutoClosed,
   });
 }

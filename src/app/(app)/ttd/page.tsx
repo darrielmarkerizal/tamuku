@@ -125,6 +125,12 @@ export default async function TtdPage() {
             <Plus className="size-5" strokeWidth={3} />
             TAMBAH STOK
           </Link>
+          <Link
+            href="/ttd/koreksi"
+            className="mt-2 font-mono text-[10px] font-bold text-primary-strong hover:underline uppercase tracking-wider"
+          >
+            Atur ulang stok →
+          </Link>
         </section>
 
         <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5">

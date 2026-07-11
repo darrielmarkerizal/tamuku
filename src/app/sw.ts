@@ -19,3 +19,47 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// ─── Web Push handler ──────────────────────────────────────────────────────
+// Payload: { title, body, url?, tag? } (JSON) — dari lib/push/server.ts
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload: {
+    title: string;
+    body: string;
+    url?: string;
+    tag?: string;
+  };
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Tamuku", body: event.data.text() };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      tag: payload.tag,
+      badge: "/icon.svg",
+      icon: "/icon.svg",
+      data: { url: payload.url ?? "/dashboard" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url =
+    (event.notification.data as { url?: string } | null)?.url ?? "/dashboard";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.endsWith(url) && "focus" in client) {
+          return (client as WindowClient).focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

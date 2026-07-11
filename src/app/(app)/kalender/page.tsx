@@ -2,32 +2,18 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Mascot } from "@/components/mascot";
-import { cn } from "@/lib/cn";
 import {
   addDays,
   dayOfWeekMon,
   firstDayOfMonth,
   formatMonthYear,
-  lastDayOfMonth,
   today,
   toIsoDate,
 } from "@/lib/date";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { predictNextPeriod } from "@/lib/period/sma";
-
-const WEEKDAYS = ["S", "S", "R", "K", "J", "S", "M"]; // Sen..Min
-
-type Variant = "period" | "prediction" | "today" | "today-period" | "plain" | "muted";
-
-interface DayCellData {
-  key: string;
-  day: number;
-  variant: Variant;
-  iso?: string;
-}
-
-type DayCellProps = Omit<DayCellData, "key">;
+import { KalenderGrid, type DayCellData, type Variant } from "./kalender-grid";
 
 interface PageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -42,11 +28,24 @@ export default async function KalenderPage({ searchParams }: PageProps) {
   const m = Number(sp.m) || todayDate.getUTCMonth() + 1; // 1-12
   const cursor = new Date(Date.UTC(y, m - 1, 1));
 
-  const periods = await db.menstruationLog.findMany({
-    where: { userId: user.id },
-    select: { start_date: true, end_date: true },
-    orderBy: { start_date: "asc" },
-  });
+  const monthStart0 = new Date(Date.UTC(y, m - 1, 1));
+  const monthEnd0 = new Date(Date.UTC(y, m, 0));
+
+  const [periods, journalDays] = await Promise.all([
+    db.menstruationLog.findMany({
+      where: { userId: user.id },
+      select: { start_date: true, end_date: true },
+      orderBy: { start_date: "asc" },
+    }),
+    db.journalLog.findMany({
+      where: {
+        userId: user.id,
+        log_date: { gte: monthStart0, lte: monthEnd0 },
+      },
+      select: { log_date: true },
+    }),
+  ]);
+  const journalIsoSet = new Set(journalDays.map((j) => toIsoDate(j.log_date)));
 
   const prediction = predictNextPeriod(periods);
   const predictedStart = prediction.nextStart;
@@ -100,7 +99,13 @@ export default async function KalenderPage({ searchParams }: PageProps) {
     else if (inPrediction) variant = "prediction";
     else if (isToday) variant = "today";
 
-    days.push({ key: iso, day: d.getUTCDate(), variant, iso });
+    days.push({
+      key: iso,
+      day: d.getUTCDate(),
+      variant,
+      iso,
+      hasJournal: journalIsoSet.has(iso),
+    });
   }
 
   // Fill trailing sampai grid rapi ke minggu berikutnya (min 5 rows total)
@@ -164,23 +169,7 @@ export default async function KalenderPage({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        <div>
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {WEEKDAYS.map((d, i) => (
-              <div
-                key={i}
-                className="text-center font-sans text-text-muted font-bold text-sm"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-y-2 gap-x-1 justify-items-center">
-            {days.map(({ key, ...rest }) => (
-              <DayCell key={key} {...rest} />
-            ))}
-          </div>
-        </div>
+        <KalenderGrid days={days} />
 
         <div className="bg-surface p-4 rounded-[12px] border-2 border-ink shadow-retro flex flex-wrap gap-4 justify-center items-center">
           <LegendItem
@@ -231,49 +220,6 @@ export default async function KalenderPage({ searchParams }: PageProps) {
         </div>
       </main>
     </>
-  );
-}
-
-function DayCell({ day, variant }: DayCellProps) {
-  if (variant === "muted") {
-    return (
-      <div className="size-10 flex items-center justify-center font-sans text-base opacity-40">
-        {day}
-      </div>
-    );
-  }
-  if (variant === "period") {
-    return (
-      <div className="size-10 flex items-center justify-center font-sans text-base font-bold text-white bg-period border-2 border-ink rounded-[8px] shadow-retro-sm">
-        {day}
-      </div>
-    );
-  }
-  if (variant === "today-period") {
-    return (
-      <div className="size-10 flex items-center justify-center font-sans text-base font-bold text-white bg-period border-2 border-ink rounded-[8px] shadow-retro-sm ring-4 ring-primary ring-offset-1 ring-offset-bg">
-        {day}
-      </div>
-    );
-  }
-  if (variant === "prediction") {
-    return (
-      <div className="size-10 flex items-center justify-center font-sans text-base font-bold text-ink bg-prediction border-2 border-dashed border-ink rounded-[8px]">
-        {day}
-      </div>
-    );
-  }
-  if (variant === "today") {
-    return (
-      <div className="size-10 flex items-center justify-center font-sans text-base font-bold text-ink border-2 border-primary rounded-full">
-        {day}
-      </div>
-    );
-  }
-  return (
-    <div className="size-10 flex items-center justify-center font-sans text-base text-ink">
-      {day}
-    </div>
   );
 }
 
