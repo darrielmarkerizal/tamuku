@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
@@ -76,22 +75,19 @@ const manualLogSchema = z
     { message: "Tanggal selesai nggak bisa sebelum tanggal mulai." }
   );
 
-export type ManualLogState = {
-  error?: string;
-  fieldErrors?: Record<string, string>;
-};
-
 export async function manualLogPeriodAction(
-  _prev: ManualLogState | undefined,
   formData: FormData
-): Promise<ManualLogState> {
+): Promise<PeriodActionResult> {
   const user = await requireUser();
   const parsed = manualLogSchema.safeParse({
     start_iso: formData.get("start_iso") ?? "",
     end_iso: formData.get("end_iso") ?? "",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Input tidak valid." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Input tidak valid.",
+    };
   }
 
   const start = parseIsoDate(parsed.data.start_iso);
@@ -99,10 +95,10 @@ export async function manualLogPeriodAction(
   const todayDate = today();
 
   if (start > todayDate) {
-    return { error: "Tanggal mulai nggak boleh di masa depan." };
+    return { ok: false, error: "Tanggal mulai nggak boleh di masa depan." };
   }
   if (end && end > todayDate) {
-    return { error: "Tanggal selesai nggak boleh di masa depan." };
+    return { ok: false, error: "Tanggal selesai nggak boleh di masa depan." };
   }
 
   // Overlap check
@@ -116,7 +112,10 @@ export async function manualLogPeriodAction(
     return e.start_date <= rangeEnd && eEnd >= start;
   });
   if (overlaps) {
-    return { error: "Rentang bertumpuk dengan siklus yang sudah tercatat." };
+    return {
+      ok: false,
+      error: "Rentang bertumpuk dengan siklus yang sudah tercatat.",
+    };
   }
 
   // Sorted logs untuk hitung cycle_length
@@ -143,7 +142,7 @@ export async function manualLogPeriodAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/kalender");
-  redirect("/kalender");
+  return { ok: true };
 }
 
 /**

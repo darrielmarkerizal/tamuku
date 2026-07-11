@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   logPeriodEndAction,
   logPeriodStartAction,
 } from "@/lib/period/actions";
+import { trySubmit } from "@/lib/offline/try-submit";
 
 interface Props {
   isPeriodActive: boolean;
@@ -17,6 +19,7 @@ export function PeriodButton({
   periodDay,
   periodStartLabel,
 }: Props) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,9 +27,21 @@ export function PeriodButton({
     setError(null);
     startTransition(async () => {
       const res = isPeriodActive
-        ? await logPeriodEndAction()
-        : await logPeriodStartAction();
-      if (!res.ok) setError(res.error);
+        ? await trySubmit(
+            () => logPeriodEndAction(),
+            "logPeriodEnd",
+            {}
+          )
+        : await trySubmit(
+            () => logPeriodStartAction(),
+            "logPeriodStart",
+            {}
+          );
+      if (!res.ok) {
+        setError(res.error);
+      } else if (res.queued) {
+        router.refresh();
+      }
     });
   }
 

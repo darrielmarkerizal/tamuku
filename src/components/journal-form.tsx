@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { upsertJournalAction } from "@/lib/journal/actions";
 import { MOODS } from "@/lib/mood-icons";
+import { trySubmit } from "@/lib/offline/try-submit";
 
 const SYMPTOMS = [
   { value: "CRAMP", label: "Kram" },
@@ -50,13 +51,24 @@ export function JournalForm({
 
   function handleSave() {
     setError(null);
-    const fd = new FormData();
-    fd.set("log_date_iso", logDateIso);
-    if (mood) fd.set("mood", mood);
-    for (const s of symptoms) fd.append("symptoms", s);
-    fd.set("notes", note);
     startTransition(async () => {
-      const res = await upsertJournalAction(fd);
+      const res = await trySubmit(
+        async () => {
+          const fd = new FormData();
+          fd.set("log_date_iso", logDateIso);
+          if (mood) fd.set("mood", mood);
+          for (const s of symptoms) fd.append("symptoms", s);
+          fd.set("notes", note);
+          return upsertJournalAction(fd);
+        },
+        "upsertJournal",
+        {
+          logDateIso,
+          mood,
+          symptoms,
+          notes: note,
+        }
+      );
       if (res.ok) {
         router.push("/jurnal");
       } else {

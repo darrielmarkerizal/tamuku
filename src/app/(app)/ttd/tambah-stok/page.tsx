@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Label } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { addStockAction } from "@/lib/ttd/actions";
+import { trySubmit } from "@/lib/offline/try-submit";
 
 const QUICK = [
   { value: 4, label: "+4", hint: "(1 STRIP)", tone: "bg-accent-yellow" },
@@ -28,11 +29,17 @@ export default function TambahStokTtdPage() {
       setError("Jumlah pil harus minimal 1.");
       return;
     }
-    const fd = new FormData();
-    fd.set("pills", String(pills));
-    fd.set("note", note);
     startTransition(async () => {
-      const res = await addStockAction(fd);
+      const res = await trySubmit(
+        async () => {
+          const fd = new FormData();
+          fd.set("pills", String(pills));
+          fd.set("note", note);
+          return addStockAction(fd);
+        },
+        "addStock",
+        { pills, note }
+      );
       if (res.ok) {
         router.push("/ttd");
       } else {

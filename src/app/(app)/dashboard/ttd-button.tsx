@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { FlashcardModal } from "@/components/flashcard-modal";
 import { logTtdAction } from "@/lib/ttd/actions";
-import { makeOp, submitOp } from "@/lib/offline/sync-client";
+import { trySubmit } from "@/lib/offline/try-submit";
 
 interface Props {
   alreadyLogged: boolean;
@@ -21,40 +21,23 @@ export function TtdButton({ alreadyLogged }: Props) {
   function handleClick() {
     setError(null);
     startTransition(async () => {
-      // Path online: Server Action → response cepat + flashcard IDs
-      // Path offline: fallback ke outbox (via sync-client)
-      const isOnline =
-        typeof navigator === "undefined" || navigator.onLine;
-      if (isOnline) {
-        try {
-          const res = await logTtdAction();
-          if (res.ok) {
-            setDoneNow(true);
-            if (
-              res.data?.flashcardIds &&
-              res.data.flashcardIds.length > 0
-            ) {
-              setFlashcardIds(res.data.flashcardIds);
-            }
-            return;
-          }
-          setError(res.error);
-          return;
-        } catch (err) {
-          // Network fail → fallback ke outbox
-          console.warn("logTtd online failed, fallback to outbox:", err);
-        }
-      }
-
-      // Offline / fallback path
-      const op = makeOp("logTtd");
-      const res = await submitOp(op);
+      const res = await trySubmit(
+        () => logTtdAction(),
+        "logTtd",
+        {}
+      );
       if (res.ok) {
         setDoneNow(true);
-        // Optimistik — flashcard nanti muncul saat online sync + revalidate
-        router.refresh();
+        if (!res.queued) {
+          const data = res.data as { flashcardIds?: string[] } | undefined;
+          if (data?.flashcardIds && data.flashcardIds.length > 0) {
+            setFlashcardIds(data.flashcardIds);
+          }
+        } else {
+          router.refresh();
+        }
       } else {
-        setError("Nggak bisa simpan sekarang. Coba lagi saat online.");
+        setError(res.error);
       }
     });
   }

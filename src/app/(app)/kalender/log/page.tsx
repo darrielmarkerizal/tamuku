@@ -1,30 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { Button } from "@/components/ui/button";
 import { RetroToggle } from "@/components/retro-toggle";
 import { cn } from "@/lib/cn";
-import {
-  manualLogPeriodAction,
-  type ManualLogState,
-} from "@/lib/period/actions";
+import { manualLogPeriodAction } from "@/lib/period/actions";
 import { toIsoDate, today } from "@/lib/date";
-
-const INITIAL: ManualLogState = {};
+import { trySubmit } from "@/lib/offline/try-submit";
 
 export default function CatatHaidManualPage() {
-  const [state, formAction, pending] = useActionState(
-    manualLogPeriodAction,
-    INITIAL
-  );
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [stillActive, setStillActive] = useState(true);
   const [startIso, setStartIso] = useState("");
   const [endIso, setEndIso] = useState("");
 
   const todayIso = toIsoDate(today());
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!startIso) return;
+    setError(null);
+
+    const effectiveEndIso = stillActive ? null : endIso || null;
+
+    startTransition(async () => {
+      const res = await trySubmit(
+        async () => {
+          const fd = new FormData();
+          fd.set("start_iso", startIso);
+          fd.set("end_iso", effectiveEndIso ?? "");
+          return manualLogPeriodAction(fd);
+        },
+        "manualLogPeriod",
+        {
+          startIso,
+          endIso: effectiveEndIso,
+        }
+      );
+
+      if (res.ok) {
+        router.push("/kalender");
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <div className="min-h-dvh flex flex-col bg-bg">
@@ -42,7 +68,7 @@ export default function CatatHaidManualPage() {
         <span className="size-8" />
       </header>
 
-      <form action={formAction} className="flex-1 flex flex-col">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <main className="flex-1 p-5 flex flex-col gap-8 pb-32">
           <section className="flex flex-col gap-3">
             <label
@@ -114,9 +140,9 @@ export default function CatatHaidManualPage() {
             </div>
           </section>
 
-          {state?.error && (
+          {error && (
             <div className="bg-pink-cream border-2 border-danger rounded-[8px] px-3 py-2 font-sans text-sm text-danger">
-              {state.error}
+              {error}
             </div>
           )}
 
