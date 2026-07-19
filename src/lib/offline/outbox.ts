@@ -1,10 +1,8 @@
 import { getOfflineDb } from "./db";
 import type { Operation, OutboxEntry } from "./types";
 
-// Batas retry sebelum masuk `failed`
 const MAX_ATTEMPTS = 5;
 
-// Backoff (ms) — konservatif utk mobile
 const BACKOFF_MS = [1_000, 5_000, 30_000, 120_000, 600_000];
 
 export async function enqueue(op: Operation): Promise<number> {

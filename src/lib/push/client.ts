@@ -1,5 +1,4 @@
-// Helper client untuk register push subscription.
-// Butuh service worker aktif (Serwist sudah handle).
+
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);

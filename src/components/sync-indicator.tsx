@@ -6,7 +6,6 @@ import { CloudOff, RefreshCcw } from "lucide-react";
 import { flushOutbox } from "@/lib/offline/sync-client";
 import { getOfflineDb } from "@/lib/offline/db";
 
-// Kecil, tampil kalau ada outbox pending/failed atau kalau navigator offline.
 export function SyncIndicator() {
   const [pending, setPending] = useState(0);
   const [offline, setOffline] = useState(false);

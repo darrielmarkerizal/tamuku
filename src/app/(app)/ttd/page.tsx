@@ -50,7 +50,6 @@ export default async function TtdPage() {
     logByIso.set(toIsoDate(log.log_date), log.status);
   }
 
-  // Heatmap: 35 kotak (5 minggu × 7 hari), berakhir di hari ini
   const HEATMAP_DAYS = 35;
   const startCell = addDays(todayDate, -(HEATMAP_DAYS - 1));
   const cells = Array.from({ length: HEATMAP_DAYS }, (_, i) => {

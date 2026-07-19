@@ -3,9 +3,6 @@
 import { useEffect, useState } from "react";
 import { Share, Smartphone, X } from "lucide-react";
 
-// Deteksi iOS Safari yang belum di-install sebagai PWA. Kalau iya,
-// tampilkan hint kecil di bawah dengan step Add to Home Screen.
-
 function isIos(): boolean {
   if (typeof window === "undefined") return false;
   return /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -29,7 +26,7 @@ export function IosInstallHint() {
     if (!isIos()) return;
     if (isStandalone()) return;
     if (window.sessionStorage.getItem(DISMISS_KEY)) return;
-    // Delay 3 detik biar nggak intrusif
+
     const t = setTimeout(() => setShow(true), 3000);
     return () => clearTimeout(t);
   }, []);

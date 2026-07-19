@@ -16,10 +16,6 @@ export type PeriodActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
-/**
- * Tandai haid dimulai hari ini. Tolak kalau sudah ada log terbuka
- * (invariant: max 1 log dengan end_date = null per user).
- */
 export async function logPeriodStartAction(): Promise<PeriodActionResult> {
   const user = await requireUser();
   const todayDate = today();
@@ -56,8 +52,6 @@ export async function logPeriodStartAction(): Promise<PeriodActionResult> {
   revalidatePath("/kalender");
   return { ok: true };
 }
-
-// ─── Manual backfill ─────────────────────────────────────────────────────────
 
 const manualLogSchema = z
   .object({
@@ -101,7 +95,6 @@ export async function manualLogPeriodAction(
     return { ok: false, error: "Tanggal selesai nggak boleh di masa depan." };
   }
 
-  // Overlap check
   const existing = await db.menstruationLog.findMany({
     where: { userId: user.id },
     select: { start_date: true, end_date: true },
@@ -118,7 +111,6 @@ export async function manualLogPeriodAction(
     };
   }
 
-  // Sorted logs untuk hitung cycle_length
   const sorted = existing.slice().sort(
     (a, b) => a.start_date.getTime() - b.start_date.getTime()
   );
@@ -145,9 +137,6 @@ export async function manualLogPeriodAction(
   return { ok: true };
 }
 
-/**
- * Tandai haid saat ini selesai hari ini.
- */
 export async function logPeriodEndAction(): Promise<PeriodActionResult> {
   const user = await requireUser();
   const todayDate = today();

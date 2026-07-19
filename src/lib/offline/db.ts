@@ -7,8 +7,6 @@ import type {
   OutboxEntry,
 } from "./types";
 
-// Semua tanggal disimpan ISO string di IndexedDB agar simpel & sortable.
-
 export class TamukuOfflineDb extends Dexie {
   profile!: Table<OfflineProfile, string>;
   menstruation_logs!: Table<OfflineMenstruationLog, string>;
@@ -28,7 +26,6 @@ export class TamukuOfflineDb extends Dexie {
   }
 }
 
-// Singleton lazy-init — Dexie sensitif ke SSR, jadi hanya inisialisasi di browser
 let _db: TamukuOfflineDb | null = null;
 
 export function getOfflineDb(): TamukuOfflineDb {

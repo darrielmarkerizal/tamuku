@@ -13,6 +13,7 @@ import {
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { predictNextPeriod } from "@/lib/period/sma";
+import { getCopy } from "@/lib/discreet";
 import { KalenderGrid, type DayCellData, type Variant } from "./kalender-grid";
 
 interface PageProps {
@@ -23,9 +24,18 @@ export default async function KalenderPage({ searchParams }: PageProps) {
   const user = await requireUser();
   const sp = await searchParams;
 
+  const copy = getCopy(user.discreet_mode);
+  const calendarTheme = {
+    periodClass: copy.periodCellClass,
+    periodTextClass: copy.periodCellTextClass,
+    predictionClass: copy.predictionCellClass,
+    periodLabel: copy.calendarPeriodLabel,
+    predictionLabel: copy.calendarPredictionLabel,
+  };
+
   const todayDate = today();
   const y = Number(sp.y) || todayDate.getUTCFullYear();
-  const m = Number(sp.m) || todayDate.getUTCMonth() + 1; // 1-12
+  const m = Number(sp.m) || todayDate.getUTCMonth() + 1;
   const cursor = new Date(Date.UTC(y, m - 1, 1));
 
   const monthStart0 = new Date(Date.UTC(y, m - 1, 1));
@@ -50,16 +60,15 @@ export default async function KalenderPage({ searchParams }: PageProps) {
   const prediction = predictNextPeriod(periods);
   const predictedStart = prediction.nextStart;
   const predictedEnd = predictedStart
-    ? addDays(predictedStart, 4) // asumsi durasi ~5 hari untuk visual
+    ? addDays(predictedStart, 4)
     : null;
 
   const monthStart = firstDayOfMonth(cursor);
-  const monthEnd = new Date(Date.UTC(y, m, 0)); // last day of month
+  const monthEnd = new Date(Date.UTC(y, m, 0));
   const leadingBlanks = dayOfWeekMon(monthStart);
 
   const days: DayCellData[] = [];
 
-  // Trailing dari bulan sebelumnya untuk isi leading blanks (opsional muted)
   for (let i = leadingBlanks; i > 0; i--) {
     const d = addDays(monthStart, -i);
     days.push({
@@ -108,7 +117,6 @@ export default async function KalenderPage({ searchParams }: PageProps) {
     });
   }
 
-  // Fill trailing sampai grid rapi ke minggu berikutnya (min 5 rows total)
   const total = days.length;
   const trailingNeeded = (7 - (total % 7)) % 7;
   for (let i = 1; i <= trailingNeeded; i++) {
@@ -120,13 +128,11 @@ export default async function KalenderPage({ searchParams }: PageProps) {
     });
   }
 
-  // Navigation
   const prev = new Date(Date.UTC(y, m - 2, 1));
   const next = new Date(Date.UTC(y, m, 1));
   const prevHref = `/kalender?y=${prev.getUTCFullYear()}&m=${prev.getUTCMonth() + 1}`;
   const nextHref = `/kalender?y=${next.getUTCFullYear()}&m=${next.getUTCMonth() + 1}`;
 
-  // Card rata-rata siklus
   const validCycles = periods
     .slice(1)
     .map((p, i) => {
@@ -146,7 +152,11 @@ export default async function KalenderPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <AppHeader greeting="KALENDER" />
+      <AppHeader
+        greeting="KALENDER"
+        section="kalender"
+        initial={(user.name ?? user.username).charAt(0).toUpperCase()}
+      />
 
       <main className="px-5 flex flex-col gap-6 mt-2">
         <div className="flex items-center justify-between">
@@ -169,18 +179,24 @@ export default async function KalenderPage({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        <KalenderGrid days={days} />
+        <KalenderGrid days={days} theme={calendarTheme} />
 
         <div className="bg-surface p-4 rounded-[12px] border-2 border-ink shadow-retro flex flex-wrap gap-4 justify-center items-center">
           <LegendItem
-            swatch={<span className="size-4 bg-period border-2 border-ink rounded-[4px]" />}
-            label="Haid tercatat"
+            swatch={
+              <span
+                className={`size-4 ${copy.periodCellClass} border-2 border-ink rounded-[4px]`}
+              />
+            }
+            label={copy.calendarPeriodLabel}
           />
           <LegendItem
             swatch={
-              <span className="size-4 bg-prediction border-2 border-dashed border-ink rounded-[4px]" />
+              <span
+                className={`size-4 ${copy.predictionCellClass} border-2 border-dashed border-ink rounded-[4px]`}
+              />
             }
-            label="Prediksi"
+            label={copy.calendarPredictionLabel}
           />
           <LegendItem
             swatch={<span className="size-4 rounded-full border-2 border-primary" />}
@@ -193,12 +209,12 @@ export default async function KalenderPage({ searchParams }: PageProps) {
           className="w-full bg-primary text-white font-display font-black text-lg py-4 px-6 rounded-[12px] border-2 border-ink shadow-retro press-retro flex items-center justify-center gap-2 uppercase"
         >
           <Plus className="size-5" strokeWidth={3} />
-          CATAT HAID MANUAL
+          {copy.calendarLogCta}
         </Link>
 
         <div className="bg-accent-yellow p-5 rounded-[12px] border-2 border-ink shadow-retro-lg relative">
           <div className="absolute top-0 right-3 -translate-y-6">
-            <Mascot state="cheerful" size={56} />
+            <Mascot state="cheerful" size={56} bob />
           </div>
           <h3 className="font-display font-black text-xl text-ink mb-2 uppercase">
             RATA-RATA SIKLUSMU

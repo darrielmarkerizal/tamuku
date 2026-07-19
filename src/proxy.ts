@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Cocokkan semua kecuali _next static, image, favicon, icon, manifest, sw, api
+
     "/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js|api).*)",
   ],
 };

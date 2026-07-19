@@ -26,7 +26,6 @@ export default async function JurnalDatePage({ params, searchParams }: Props) {
   const logDate = parseIsoDate(date);
   const todayDate = today();
   if (logDate > todayDate) {
-    // Jurnal masa depan → redirect ke hari ini
     redirect(`/jurnal/${toIsoDate(todayDate)}`);
   }
 

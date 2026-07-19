@@ -22,10 +22,6 @@ export interface PushPayload {
   tag?: string;
 }
 
-/**
- * Kirim push ke satu user. Iterate semua subscription-nya. Hapus
- * subscription yang sudah expired (410/404).
- */
 export async function sendPushToUser(userId: string, payload: PushPayload) {
   ensureConfigured();
   const subs = await db.pushSubscription.findMany({

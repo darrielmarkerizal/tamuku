@@ -24,11 +24,21 @@ export interface DayCellData {
   hasJournal?: boolean;
 }
 
-interface Props {
-  days: DayCellData[];
+export interface CalendarTheme {
+  periodClass: string;
+
+  periodTextClass: string;
+  predictionClass: string;
+  periodLabel: string;
+  predictionLabel: string;
 }
 
-export function KalenderGrid({ days }: Props) {
+interface Props {
+  days: DayCellData[];
+  theme: CalendarTheme;
+}
+
+export function KalenderGrid({ days, theme }: Props) {
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
   const selected = selectedIso
     ? days.find((d) => d.iso === selectedIso)
@@ -52,6 +62,7 @@ export function KalenderGrid({ days }: Props) {
             <DayCell
               key={cell.key}
               cell={cell}
+              theme={theme}
               onSelect={setSelectedIso}
             />
           ))}
@@ -62,6 +73,7 @@ export function KalenderGrid({ days }: Props) {
         <DayDetailSheet
           iso={selected.iso}
           variant={selected.variant}
+          theme={theme}
           hasJournal={!!selected.hasJournal}
           onClose={() => setSelectedIso(null)}
         />
@@ -72,9 +84,11 @@ export function KalenderGrid({ days }: Props) {
 
 function DayCell({
   cell,
+  theme,
   onSelect,
 }: {
   cell: DayCellData;
+  theme: CalendarTheme;
   onSelect: (iso: string) => void;
 }) {
   const clickable = cell.variant !== "muted" && !!cell.iso;
@@ -98,7 +112,11 @@ function DayCell({
     return (
       <Tag
         {...commonProps}
-        className="size-10 flex items-center justify-center font-sans text-base font-bold text-white bg-period border-2 border-ink rounded-[8px] shadow-retro-sm press-retro"
+        className={cn(
+          "size-10 flex items-center justify-center font-sans text-base font-bold border-2 border-ink rounded-[8px] shadow-retro-sm press-retro",
+          theme.periodClass,
+          theme.periodTextClass
+        )}
       >
         {cell.day}
       </Tag>
@@ -108,7 +126,11 @@ function DayCell({
     return (
       <Tag
         {...commonProps}
-        className="size-10 flex items-center justify-center font-sans text-base font-bold text-white bg-period border-2 border-ink rounded-[8px] shadow-retro-sm ring-4 ring-primary ring-offset-1 ring-offset-bg press-retro"
+        className={cn(
+          "size-10 flex items-center justify-center font-sans text-base font-bold border-2 border-ink rounded-[8px] shadow-retro-sm ring-4 ring-primary ring-offset-1 ring-offset-bg press-retro",
+          theme.periodClass,
+          theme.periodTextClass
+        )}
       >
         {cell.day}
       </Tag>
@@ -118,7 +140,10 @@ function DayCell({
     return (
       <Tag
         {...commonProps}
-        className="size-10 flex items-center justify-center font-sans text-base font-bold text-ink bg-prediction border-2 border-dashed border-ink rounded-[8px] press-retro"
+        className={cn(
+          "size-10 flex items-center justify-center font-sans text-base font-bold text-ink border-2 border-dashed border-ink rounded-[8px] press-retro",
+          theme.predictionClass
+        )}
       >
         {cell.day}
       </Tag>
@@ -153,11 +178,13 @@ function DayCell({
 function DayDetailSheet({
   iso,
   variant,
+  theme,
   hasJournal,
   onClose,
 }: {
   iso: string;
   variant: Variant;
+  theme: CalendarTheme;
   hasJournal: boolean;
   onClose: () => void;
 }) {
@@ -167,9 +194,9 @@ function DayDetailSheet({
 
   const status =
     variant === "period" || variant === "today-period"
-      ? { label: "Haid tercatat", color: "text-primary-strong" }
+      ? { label: theme.periodLabel, color: "text-primary-strong" }
       : variant === "prediction"
-        ? { label: "Prediksi haid", color: "text-primary-strong" }
+        ? { label: theme.predictionLabel, color: "text-primary-strong" }
         : { label: "Hari biasa", color: "text-text-muted" };
 
   return (

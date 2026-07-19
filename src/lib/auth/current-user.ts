@@ -22,6 +22,9 @@ export const getCurrentUser = cache(async () => {
       badges: true,
       streak_current: true,
       streak_longest: true,
+      streak_freeze_left: true,
+      equipped_accessory: true,
+      discreet_mode: true,
       onboarding_completed: true,
     },
   });
@@ -29,9 +32,6 @@ export const getCurrentUser = cache(async () => {
   return user;
 });
 
-// Redirect via route handler yang bisa clear cookie.
-// Kalau langsung ke /login proxy akan lempar balik ke /dashboard karena
-// JWT masih valid (padahal user-nya sudah nggak ada di DB).
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/api/logout");

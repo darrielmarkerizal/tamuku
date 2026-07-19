@@ -8,10 +8,6 @@ import { SESSION_CONFIG } from "@/lib/auth/session";
 
 export type PrivacyResult = { ok: true } | { ok: false; error: string };
 
-/**
- * Ekspor semua data user sebagai JSON string. Client bakal
- * download-nya sebagai file.
- */
 export async function exportUserDataAction(): Promise<string> {
   const user = await requireUser();
   const full = await db.user.findUnique({
@@ -26,7 +22,6 @@ export async function exportUserDataAction(): Promise<string> {
   });
   if (!full) throw new Error("User tidak ditemukan.");
 
-  // Buang field sensitif (password hash)
   const { password: _p, ...safe } = full;
   void _p;
   return JSON.stringify(
@@ -39,10 +34,6 @@ export async function exportUserDataAction(): Promise<string> {
   );
 }
 
-/**
- * Hapus semua data domain (menstruation, TTD, jurnal, adjustment) tapi
- * akun tetap aktif. Reset streak & badges.
- */
 export async function deleteAllDataAction(): Promise<PrivacyResult> {
   const user = await requireUser();
   await db.$transaction(async (tx) => {
@@ -65,9 +56,6 @@ export async function deleteAllDataAction(): Promise<PrivacyResult> {
   return { ok: true };
 }
 
-/**
- * Soft delete akun (set deletedAt). Cookie session dihapus, redirect ke login.
- */
 export async function deleteAccountAction(): Promise<never> {
   const user = await requireUser();
   await db.user.update({

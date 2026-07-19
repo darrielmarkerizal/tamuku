@@ -14,7 +14,6 @@ import type {
   Operation,
 } from "./types";
 
-// Wrapper: enqueue outbox + trigger flush kalau online.
 export async function submitOp(op: Operation): Promise<
   | { ok: true; local: true }
   | { ok: true; local: false; data?: unknown }
@@ -40,7 +39,6 @@ export async function flushOutbox(): Promise<
     .map((e) => e.op);
   if (ops.length === 0) return { ok: true, local: true };
 
-  // Mark syncing
   for (const e of pending) {
     if (e.localId !== undefined) await markSyncing(e.localId);
   }
@@ -53,7 +51,6 @@ export async function flushOutbox(): Promise<
       body: JSON.stringify({ ops }),
     });
   } catch (err) {
-    // Network gagal — kembalikan status pending untuk retry nanti
     const msg = err instanceof Error ? err.message : "network_error";
     for (const e of pending) {
       if (e.localId !== undefined) await markFailed(e.localId, msg);
@@ -103,7 +100,6 @@ export async function flushOutbox(): Promise<
   return { ok: true, local: false, data: lastData };
 }
 
-// Hydration: fetch snapshot dan tulis ke Dexie (replace).
 export async function hydrate() {
   const response = await fetch("/api/sync/snapshot");
   if (!response.ok) throw new Error(`snapshot_${response.status}`);

@@ -20,8 +20,8 @@ const SYMPTOMS = [
 ] as const;
 
 interface JournalFormProps {
-  logDateIso: string;         // "YYYY-MM-DD" — dikirim ke server
-  dateLabel: string;           // "RAB, 8 JUL"
+  logDateIso: string;
+  dateLabel: string;
   initialMood?: string | null;
   initialSymptoms?: string[];
   initialNote?: string;

@@ -12,12 +12,19 @@ interface Props {
   isPeriodActive: boolean;
   periodDay: number;
   periodStartLabel: string | null;
+
+  startLabel: string;
+  endLabel: string;
+  startHint: string;
 }
 
 export function PeriodButton({
   isPeriodActive,
   periodDay,
   periodStartLabel,
+  startLabel,
+  endLabel,
+  startHint,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -45,10 +52,10 @@ export function PeriodButton({
     });
   }
 
-  const label = isPeriodActive ? "TANDAI HAID SELESAI" : "TANDAI HAID DIMULAI";
+  const label = isPeriodActive ? endLabel : startLabel;
   const sub = isPeriodActive
     ? `Hari ke-${periodDay}${periodStartLabel ? ` dimulai ${periodStartLabel}` : ""}`
-    : "Klik saat haid dimulai";
+    : startHint;
 
   return (
     <div className="flex flex-col gap-2">

@@ -10,7 +10,7 @@ function createClient() {
   if (!url) throw new Error("DATABASE_URL env belum diset");
   const adapter = new PrismaPg({
     connectionString: url,
-    // PgBouncer di VPS pakai self-signed cert; skip verifikasi
+
     ssl: { rejectUnauthorized: false },
   });
   return new PrismaClient({ adapter });

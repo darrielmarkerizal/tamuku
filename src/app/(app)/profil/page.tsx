@@ -9,6 +9,7 @@ import {
   Pencil,
   Bell,
   Settings,
+  Sparkles,
   CalendarDays,
   CheckCircle2,
   type LucideIcon,
@@ -19,7 +20,9 @@ import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { addDays, today } from "@/lib/date";
 import { BADGES } from "@/lib/badges/rules";
+import { buildSnapshot } from "@/lib/badges/snapshot";
 import { computeMascotState } from "@/lib/mascot-state";
+import type { MascotAccessory } from "@/components/mascot";
 import { LogoutButton } from "./logout-button";
 
 type Stat = {
@@ -35,6 +38,7 @@ type Setting = {
 };
 
 const SETTINGS: Setting[] = [
+  { Icon: Sparkles, label: "Dandani Hemo", href: "/profil/hemo" },
   { Icon: Pencil, label: "Edit profil", href: "/profil/edit" },
   { Icon: Bell, label: "Pengingat & notifikasi", href: "/profil/notifikasi" },
   { Icon: CloudCog, label: "Status sync", href: "/profil/sync" },
@@ -60,18 +64,20 @@ export default async function ProfilPage() {
     }),
   ]);
 
-  // Kepatuhan 30 hari: jumlah log / target ~ 30 hari (jika daily) atau ~4 minggu
-  // MVP heuristic: taken / min(30, days-since-signup)
   const complianceTarget = 30;
   const compliancePct = Math.min(
     100,
     Math.round((ttdLogs30 / complianceTarget) * 100)
   );
 
-  const periods14 = await db.menstruationLog.findMany({
-    where: { userId: user.id },
-    select: { start_date: true, end_date: true },
-  });
+  const [periods14, snapshot] = await Promise.all([
+    db.menstruationLog.findMany({
+      where: { userId: user.id },
+      select: { start_date: true, end_date: true },
+    }),
+
+    buildSnapshot(user.id),
+  ]);
   const mascotState = computeMascotState(ttdLogs14, periods14, todayDate);
 
   const stats: Stat[] = [
@@ -84,6 +90,15 @@ export default async function ProfilPage() {
     .join(" • ");
 
   const owned = new Set(user.badges);
+
+  const ratioOf = (b: (typeof BADGES)[number]) =>
+    !snapshot || b.target === 0 ? 0 : b.progress(snapshot) / b.target;
+  const sortedBadges = [...BADGES].sort((a, b) => {
+    const aOwned = owned.has(a.slug) ? 1 : 0;
+    const bOwned = owned.has(b.slug) ? 1 : 0;
+    if (aOwned !== bOwned) return bOwned - aOwned;
+    return ratioOf(b) - ratioOf(a);
+  });
 
   return (
     <>
@@ -102,9 +117,18 @@ export default async function ProfilPage() {
 
       <main className="flex-1 px-5 pt-4 pb-8 flex flex-col gap-7">
         <section className="bg-accent-yellow border-2 border-ink rounded-[12px] shadow-retro p-5 flex items-center gap-4 relative overflow-hidden">
-          <div className="size-20 rounded-full border-2 border-ink bg-surface shrink-0 shadow-retro-sm flex items-center justify-center z-10">
-            <Mascot state={mascotState} size={64} />
-          </div>
+          <Link
+            href="/profil/hemo"
+            aria-label="Dandani Hemo"
+            className="size-20 rounded-full border-2 border-ink bg-surface shrink-0 shadow-retro-sm flex items-center justify-center z-10 press-retro"
+          >
+            <Mascot
+              state={mascotState}
+              accessory={user.equipped_accessory as MascotAccessory | null}
+              size={64}
+              bob
+            />
+          </Link>
           <div className="flex flex-col z-10 min-w-0">
             <h2 className="font-display text-2xl font-extrabold text-ink mb-2 truncate">
               {user.name ?? user.username}
@@ -137,25 +161,32 @@ export default async function ProfilPage() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h3 className="font-display text-lg font-extrabold uppercase text-ink">
-            LENCANA KAMU
-          </h3>
+          <div className="flex justify-between items-baseline">
+            <h3 className="font-display text-lg font-extrabold uppercase text-ink">
+              LENCANA KAMU
+            </h3>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+              {owned.size} / {BADGES.length}
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-            {BADGES.map((b) => {
+            {sortedBadges.map((b) => {
               const locked = !owned.has(b.slug);
+              const current = snapshot ? Math.min(b.progress(snapshot), b.target) : 0;
+              const pct = b.target === 0 ? 0 : (current / b.target) * 100;
+
               return (
                 <div
                   key={b.slug}
-                  className={cn(
-                    "flex flex-col items-center gap-2 text-center",
-                    locked && "opacity-60 grayscale"
-                  )}
+                  className="flex flex-col items-center gap-2 text-center"
                   title={b.description}
                 >
                   <div
                     className={cn(
                       "size-16 rounded-full border-2 border-ink shadow-retro-sm flex items-center justify-center relative",
-                      locked ? "bg-pink-cream" : b.bg
+                      locked ? "bg-pink-cream" : b.bg,
+
+                      locked && "opacity-70"
                     )}
                   >
                     <b.Icon
@@ -171,9 +202,28 @@ export default async function ProfilPage() {
                       </span>
                     )}
                   </div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+                  <span
+                    className={cn(
+                      "font-mono text-[10px] font-bold uppercase tracking-wider leading-tight",
+                      locked ? "text-text-muted" : "text-ink"
+                    )}
+                  >
                     {b.name}
                   </span>
+
+                  {locked && b.target > 1 && (
+                    <div className="w-full flex flex-col items-center gap-1">
+                      <div className="w-12 h-1.5 bg-pink-cream border border-ink rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[9px] font-bold text-text-muted">
+                        {current}/{b.target} {b.unit}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -1,11 +1,5 @@
 import { FLASHCARDS } from "@/content/flashcards";
 
-/**
- * Pilih k kartu untuk ditampilkan. Prioritas: kartu yang belum di-seen.
- * Kalau semua sudah seen, fallback: random dari semua.
- *
- * Deterministik untuk test — pakai seededShuffle kalau perlu, tapi MVP OK random.
- */
 export function pickNextForUser(
   seen: string[],
   k: number = 1

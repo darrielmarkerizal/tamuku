@@ -20,9 +20,6 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
-// ─── Web Push handler ──────────────────────────────────────────────────────
-// Payload: { title, body, url?, tag? } (JSON) — dari lib/push/server.ts
-
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   let payload: {

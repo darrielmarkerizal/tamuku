@@ -9,7 +9,7 @@ type LogItem = {
   id: string;
   kind: "drink" | "stock" | "correction";
   title: string;
-  detail: string; // "Sen, 28 Jun"
+  detail: string;
   badge: string;
   createdAt: Date;
 };
@@ -39,8 +39,6 @@ export default async function TtdRiwayatPage() {
     }),
   ]);
 
-  // Consumed adjustment berpasangan dengan ttdLog — jangan tampilkan double.
-  // Kita hanya render adjustments non-CONSUMED sebagai entri terpisah.
   const items: LogItem[] = [];
   for (const log of ttdLogs) {
     items.push({
@@ -70,9 +68,8 @@ export default async function TtdRiwayatPage() {
   }
   items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  // Grouping ringan: Hari ini / Minggu ini / Lebih lama
   const startOfWeek = new Date(todayDate);
-  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Minggu
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
   const groups: { label: string; items: LogItem[] }[] = [
     { label: "HARI INI", items: [] },
     { label: "MINGGU INI", items: [] },

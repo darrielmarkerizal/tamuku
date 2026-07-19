@@ -1,7 +1,7 @@
 const KEY = "tamuku_onboarding_draft";
 
 export interface OnboardingDraft {
-  periodStartIso?: string | null; // "YYYY-MM-DD" atau null kalau lewati
+  periodStartIso?: string | null;
   initialTtd?: number;
 }
 

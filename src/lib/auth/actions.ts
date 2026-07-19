@@ -8,14 +8,10 @@ import { parseIsoDate } from "@/lib/date";
 import { hashPassword, verifyPassword } from "./password";
 import { SESSION_CONFIG, signSession, verifySession } from "./session";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 export type AuthState = {
   error?: string;
   fieldErrors?: Record<string, string>;
 };
-
-// ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const usernameSchema = z
   .string()
@@ -53,8 +49,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password wajib diisi"),
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 async function setSessionCookie(userId: string, username: string) {
   const token = await signSession({ userId, username });
   const cookieStore = await cookies();
@@ -75,8 +69,6 @@ function collectFieldErrors(err: z.ZodError): Record<string, string> {
   }
   return out;
 }
-
-// ─── Server Actions ──────────────────────────────────────────────────────────
 
 export async function registerAction(
   _prev: AuthState | undefined,
@@ -190,8 +182,6 @@ export async function logoutAction() {
   cookieStore.delete(SESSION_CONFIG.name);
   redirect("/login");
 }
-
-// ─── Onboarding ──────────────────────────────────────────────────────────────
 
 const completeOnboardingSchema = z.object({
   weekly_day: z.coerce.number().int().min(0).max(6),

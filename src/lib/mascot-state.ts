@@ -9,11 +9,6 @@ interface TtdLog {
   log_date: Date;
 }
 
-/**
- * Hitung state maskot berdasarkan kepatuhan minum TTD 14 hari terakhir.
- * Target harian saat haid, weekly di luar → simplifikasi MVP:
- *   compliance = jumlah hari ter-log / (jumlah hari haid + max(1, jumlah minggu non-haid))
- */
 export function computeMascotState(
   ttdLogs14: TtdLog[],
   periods: PeriodEntry[],
@@ -34,14 +29,13 @@ export function computeMascotState(
       expected++;
       if (loggedIso.has(iso)) hit++;
     } else {
-      // Kumpulkan per minggu ISO
       const wkKey = `${date.getUTCFullYear()}-${Math.floor(
         date.getUTCDate() / 7
       )}`;
       if (!weeksSeen.has(wkKey)) {
         expected++;
         weeksSeen.add(wkKey);
-        // Check apakah ada log minimal 1 di minggu non-haid ini
+
         const anyLog = Array.from({ length: 7 }).some((_, offset) => {
           const dt = addDays(date, -offset);
           return loggedIso.has(toIsoDate(dt));

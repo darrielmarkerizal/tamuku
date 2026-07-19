@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { CATEGORIES, FLASHCARDS } from "@/content/flashcards";
+import { SECTION_TONE } from "@/lib/section-tone";
 
 export default async function EdukasiPage() {
   const user = await requireUser();
@@ -16,7 +17,6 @@ export default async function EdukasiPage() {
   const readCount = FLASHCARDS.filter((f) => seen.has(f.id)).length;
   const readPct = totalCards === 0 ? 0 : Math.round((readCount / totalCards) * 100);
 
-  // "Kartu hari ini" = pilih kartu belum-seen pertama, atau kartu pertama
   const unseenFirst =
     FLASHCARDS.find((f) => !seen.has(f.id)) ?? FLASHCARDS[0];
   const featuredCategory = CATEGORIES.find(
@@ -26,7 +26,10 @@ export default async function EdukasiPage() {
   return (
     <>
       <header className="px-5 pt-8 pb-6 flex flex-col gap-2">
-        <h1 className="font-display text-[40px] leading-none font-black text-primary-strong uppercase tracking-tight">
+
+        <h1
+          className={`font-display text-[40px] leading-none font-black uppercase tracking-tight ${SECTION_TONE.edukasi.accent}`}
+        >
           BELAJAR YUK
         </h1>
         <p className="font-sans text-base text-text-muted">

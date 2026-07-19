@@ -1,6 +1,5 @@
 import { addDays, daysBetween } from "@/lib/date";
 
-// ACOG-inspired: siklus normal 21–35 hari. Buang outlier.
 const MIN_CYCLE = 21;
 const MAX_CYCLE = 35;
 const DEFAULT_CYCLE = 28;
@@ -11,12 +10,6 @@ export interface PeriodEntry {
   end_date: Date | null;
 }
 
-/**
- * Prediksi tanggal haid berikutnya menggunakan Simple Moving Average
- * dari 3 siklus terakhir. Jika kurang dari 2 siklus, fallback ke 28 hari.
- *
- * @param logs — MenstruationLog[] sudah sorted asc by start_date
- */
 export function predictNextPeriod(logs: PeriodEntry[]): {
   avgCycleLength: number;
   nextStart: Date | null;
@@ -47,10 +40,6 @@ export function predictNextPeriod(logs: PeriodEntry[]): {
   };
 }
 
-/**
- * Hitung cycle_length untuk siklus baru (selisih hari ke start sebelumnya).
- * Return null kalau belum ada siklus sebelumnya.
- */
 export function calcCycleLength(
   newStart: Date,
   prevStart: Date | null
@@ -60,10 +49,6 @@ export function calcCycleLength(
   return len > 0 ? len : null;
 }
 
-/**
- * Cek apakah user sedang dalam masa haid pada tanggal `today`.
- * Aktif kalau: start ≤ today ≤ (end ?? start + 10)
- */
 export function isMenstruationActive(
   logs: PeriodEntry[],
   today: Date

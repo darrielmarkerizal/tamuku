@@ -10,7 +10,6 @@ import { cn } from "@/lib/cn";
 import { completeOnboardingAction } from "@/lib/auth/actions";
 import { clearDraft, readDraft } from "@/lib/onboarding-storage";
 
-// Sesuai NotificationSetting.weekly_day (0=Minggu ... 6=Sabtu)
 const DAYS = [
   { label: "Sen", value: 1 },
   { label: "Sel", value: 2 },

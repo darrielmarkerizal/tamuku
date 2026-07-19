@@ -5,9 +5,6 @@ import { updateStreakForUser } from "@/lib/ttd/actions";
 import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
 import { sendPushToUser } from "@/lib/push/server";
 
-// Cron dijadwalkan lewat vercel.json. Guard:
-// - Header `x-vercel-cron` — otomatis di-set Vercel untuk cron internal
-// - Optional `Authorization: Bearer $CRON_SECRET` untuk trigger manual/curl
 export async function GET(request: Request) {
   const isVercelCron = request.headers.get("x-vercel-cron") !== null;
   const auth = request.headers.get("authorization");
@@ -19,7 +16,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // Batasi ke user aktif 30 hari terakhir untuk hemat resource
   const activeCutoff = addDays(today(), -30);
   const users = await db.user.findMany({
     where: {
@@ -36,7 +32,6 @@ export async function GET(request: Request) {
   let badgesAwarded = 0;
   let periodsAutoClosed = 0;
 
-  // Auto-close period: end_date null, start_date > 10 hari lalu → close
   const todayDate = today();
   const cutoffClose = addDays(todayDate, -10);
   const openLogs = await db.menstruationLog.findMany({

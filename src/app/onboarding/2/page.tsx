@@ -24,7 +24,6 @@ import {
 } from "@/lib/date";
 import { readDraft, writeDraft } from "@/lib/onboarding-storage";
 
-// Header hari kalender: Senin..Minggu single-letter
 const WEEKDAY_HEADERS = ["S", "S", "R", "K", "J", "S", "M"];
 
 export default function OnboardingStep2Page() {
@@ -44,7 +43,6 @@ export default function OnboardingStep2Page() {
     }
   }, []);
 
-  // Last day: hari 0 dari bulan berikutnya
   const monthEndDay = new Date(
     Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0)
   ).getUTCDate();

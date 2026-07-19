@@ -74,7 +74,6 @@ export async function POST(request: Request) {
 
   for (const op of parsed.data.ops) {
     try {
-      // Idempotency check
       const exists = await db.idempotencyKey.findUnique({
         where: { key: op.idempotencyKey },
         select: { key: true },
@@ -133,8 +132,6 @@ async function runOp(
       throw new Error("unknown_op");
   }
 }
-
-// ─── Individual op runners ───────────────────────────────────────────────────
 
 async function runLogPeriodStart(userId: string) {
   const todayDate = today();
@@ -262,7 +259,6 @@ async function runLogTtd(userId: string) {
     return created;
   });
 
-  // Streak update
   try {
     const [logs, allPeriods, notif] = await Promise.all([
       db.ttdLog.findMany({ where: { userId }, select: { log_date: true } }),
@@ -275,7 +271,7 @@ async function runLogTtd(userId: string) {
         select: { weekly_day: true },
       }),
     ]);
-    void isMenstruationActive; // fungsi ini dipakai di engine
+    void isMenstruationActive;
     const summary = evaluateStreak(logs, allPeriods, notif?.weekly_day ?? 5);
     await db.user.update({
       where: { id: userId },
@@ -367,5 +363,4 @@ async function runUpsertJournal(
   return { id: upserted.id };
 }
 
-// suppress unused imports
 void addDays;

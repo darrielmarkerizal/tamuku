@@ -1,13 +1,25 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { SyncIndicator } from "@/components/sync-indicator";
+import { SECTION_TONE, type SectionKey } from "@/lib/section-tone";
 
 interface AppHeaderProps {
   greeting: React.ReactNode;
   hasUnread?: boolean;
+
+  section?: SectionKey;
+
+  initial?: string;
 }
 
-export function AppHeader({ greeting, hasUnread = false }: AppHeaderProps) {
+export function AppHeader({
+  greeting,
+  hasUnread = false,
+  section = "beranda",
+  initial = "?",
+}: AppHeaderProps) {
+  const tone = SECTION_TONE[section];
+
   return (
     <header className="px-5 pt-6 pb-4 flex justify-between items-center sticky top-0 bg-bg z-40">
       <h1 className="font-display text-2xl font-extrabold uppercase tracking-wide text-ink flex items-center gap-2">
@@ -28,9 +40,9 @@ export function AppHeader({ greeting, hasUnread = false }: AppHeaderProps) {
         <Link
           href="/profil"
           aria-label="Profil"
-          className="size-10 rounded-full border-2 border-ink overflow-hidden bg-accent-yellow flex items-center justify-center font-display font-extrabold text-ink"
+          className={`size-10 rounded-full border-2 border-ink overflow-hidden ${tone.surface} flex items-center justify-center font-display font-extrabold text-ink press-retro`}
         >
-          N
+          {initial}
         </Link>
       </div>
     </header>

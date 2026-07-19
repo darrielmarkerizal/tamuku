@@ -1,8 +1,12 @@
 import { Lock } from "lucide-react";
 import { SubpageHeader } from "@/components/subpage-header";
+import { requireUser } from "@/lib/auth/current-user";
+import { DiscreetToggle } from "./discreet-toggle";
 import { PrivasiActions } from "./privasi-actions";
 
-export default function PrivasiPage() {
+export default async function PrivasiPage() {
+  const user = await requireUser();
+
   return (
     <>
       <SubpageHeader title="PRIVASI & DATA" backHref="/profil" />
@@ -24,6 +28,8 @@ export default function PrivasiPage() {
             </div>
           </div>
         </section>
+
+        <DiscreetToggle initial={user.discreet_mode} />
 
         <PrivasiActions />
       </main>

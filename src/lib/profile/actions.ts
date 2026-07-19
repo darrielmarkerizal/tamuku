@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
+import { accessoryUnlockedBy } from "@/lib/badges/rules";
 
 export type ProfileActionResult =
   | { ok: true }
@@ -53,5 +54,48 @@ export async function updateProfileAction(
 
   revalidatePath("/profil");
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function setDiscreetModeAction(
+  next: boolean
+): Promise<ProfileActionResult> {
+  const user = await requireUser();
+  await db.user.update({
+    where: { id: user.id },
+    data: { discreet_mode: next },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/kalender");
+  revalidatePath("/ttd");
+  revalidatePath("/profil");
+  revalidatePath("/profil/privasi");
+  return { ok: true };
+}
+
+export async function setAccessoryAction(
+  slug: string | null
+): Promise<ProfileActionResult> {
+  const user = await requireUser();
+
+  if (slug !== null) {
+    const requiredBadge = accessoryUnlockedBy(slug);
+    if (!requiredBadge) {
+      return { ok: false, error: "Aksesori tidak dikenal." };
+    }
+    if (!user.badges.includes(requiredBadge)) {
+      return { ok: false, error: "Aksesori ini belum kebuka." };
+    }
+  }
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { equipped_accessory: slug },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/profil");
+  revalidatePath("/profil/hemo");
   return { ok: true };
 }

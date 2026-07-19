@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { today } from "@/lib/date";
 import { shouldRemindToday } from "@/lib/ttd/schedule";
+import { getCopy } from "@/lib/discreet";
 import { sendPushToUser } from "@/lib/push/server";
 
-// Kirim reminder TTD berdasarkan shouldRemindToday. Dijalankan cron
-// pagi (misal 06:00 WITA) atau pas jam reminder tiap user. Untuk
-// simplifikasi MVP: cron 06:00 WITA, kirim ke user aktif hari ini.
 export async function GET(request: Request) {
   const isVercelCron = request.headers.get("x-vercel-cron") !== null;
   const auth = request.headers.get("authorization");
@@ -37,17 +35,18 @@ export async function GET(request: Request) {
     if (decision.mode === "menstruation" && !setting.ttd_daily) continue;
     if (decision.mode === "weekly" && !setting.ttd_weekly) continue;
 
+    const copy = getCopy(u.discreet_mode);
     const payload =
       decision.mode === "menstruation"
         ? {
-            title: "Saatnya minum TTD hari ini",
-            body: "Kamu lagi haid — dosis harian bantu jaga stamina.",
+            title: copy.pushDailyTitle,
+            body: copy.pushDailyBody,
             url: "/dashboard",
             tag: "ttd-daily",
           }
         : {
-            title: "Waktunya minum TTD mingguan",
-            body: "Cek dashboard dan tandai sudah minum ya.",
+            title: copy.pushWeeklyTitle,
+            body: copy.pushWeeklyBody,
             url: "/dashboard",
             tag: "ttd-weekly",
           };

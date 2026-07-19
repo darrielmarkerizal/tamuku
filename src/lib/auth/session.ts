@@ -3,7 +3,6 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 const SESSION_COOKIE = "tamuku_session";
 const ALG = "HS256";
 
-// Session ~30 hari — user siswi jarang ganti device
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 function getSecret(): Uint8Array {

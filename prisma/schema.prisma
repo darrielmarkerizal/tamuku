@@ -7,22 +7,20 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
-
 enum TtdStatus {
-  WEEKLY_ROUTINE       // minum TTD di hari biasa (sekali seminggu)
-  MENSTRUATION_ROUTINE // minum TTD saat haid (setiap hari)
+  WEEKLY_ROUTINE
+  MENSTRUATION_ROUTINE
 }
 
 enum InventoryReason {
-  CONSUMED   // -1 saat log TTD
-  RECEIVED   // +N saat tambah stok
-  CORRECTION // koreksi manual (bisa +/-)
+  CONSUMED
+  RECEIVED
+  CORRECTION
 }
 
 enum MenstruationSource {
-  MANUAL     // dicatat sendiri oleh user
-  AUTO_CLOSE // ditutup otomatis oleh cron
+  MANUAL
+  AUTO_CLOSE
 }
 
 enum Mood {
@@ -43,41 +41,42 @@ enum Symptom {
   BACKPAIN
 }
 
-// ─── User ────────────────────────────────────────────────────────────────────
-
 model User {
   id                   String    @id @default(uuid()) @db.Uuid
   username             String    @unique
-  password             String    // bcrypt hash
+  password             String
   name                 String?
   email                String?
   school               String?
   class_name           String?
   birth_date           DateTime? @db.Date
 
-  // Inventory TTD (self-managed)
   inventory_ttd        Int       @default(0)
 
-  // Gamifikasi
-  badges               String[]  @default([])       // slug badge yang sudah diraih
-  streak_current       Int       @default(0)        // minggu berturut sekarang
-  streak_longest       Int       @default(0)        // rekor pribadi
-  streak_last_week_iso String?                      // "2026-W28" — patokan streak
+  badges               String[]  @default([])
+  streak_current       Int       @default(0)
+  streak_longest       Int       @default(0)
+  streak_last_week_iso String?
 
-  // Edukasi
-  seen_flashcards      String[]  @default([])       // id flashcard yang sudah tampil
+  streak_freeze_weeks  String[]  @default([])
+  streak_freeze_left   Int       @default(1)
+  streak_freeze_month  String?
 
-  // Consent & onboarding
+  equipped_accessory   String?
+
+  discreet_mode        Boolean   @default(false)
+
+  seen_flashcards      String[]  @default([])
+
   consent_accepted_at  DateTime?
   guardian_aware       Boolean   @default(false)
   onboarding_completed Boolean   @default(false)
 
-  // Aktivitas
   last_login_at        DateTime?
 
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
-  deletedAt            DateTime?                    // soft delete
+  deletedAt            DateTime?
 
   menstruationLogs     MenstruationLog[]
   ttdLogs              TtdLog[]
@@ -91,27 +90,21 @@ model User {
   @@index([last_login_at])
 }
 
-// ─── Menstruation ────────────────────────────────────────────────────────────
-
 model MenstruationLog {
   id            String             @id @default(uuid()) @db.Uuid
   userId        String             @db.Uuid
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   start_date    DateTime           @db.Date
-  end_date      DateTime?          @db.Date         // null = sedang berlangsung
-  cycle_length  Int?                                // hari sejak start sebelumnya (utk SMA)
-  period_length Int?                                // end - start (hari)
+  end_date      DateTime?          @db.Date
+  cycle_length  Int?
+  period_length Int?
   source        MenstruationSource @default(MANUAL)
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
-  // Invariant: maksimal 1 log per user dengan end_date = null (enforce di app layer)
   @@index([userId, start_date])
   @@index([userId, end_date])
 }
-
-// ─── TTD Consumption ─────────────────────────────────────────────────────────
-// Khusus log konsumsi. Perubahan stok masuk ke InventoryAdjustment.
 
 model TtdLog {
   id                 String    @id @default(uuid()) @db.Uuid
@@ -119,29 +112,24 @@ model TtdLog {
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   log_date           DateTime  @db.Date
   status             TtdStatus
-  flashcard_shown_id String?                        // referensi ke flashcard yg muncul
+  flashcard_shown_id String?
   createdAt          DateTime  @default(now())
 
-  @@unique([userId, log_date])                      // cegah double-log per hari
+  @@unique([userId, log_date])
   @@index([userId, log_date])
 }
-
-// ─── Inventory Audit Trail ───────────────────────────────────────────────────
-// Setiap perubahan inventory_ttd punya jejak di sini.
 
 model InventoryAdjustment {
   id        String          @id @default(uuid()) @db.Uuid
   userId    String          @db.Uuid
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  delta     Int                                     // +N = tambah, -N = kurang
+  delta     Int
   reason    InventoryReason
   note      String?
   createdAt DateTime        @default(now())
 
   @@index([userId, createdAt])
 }
-
-// ─── Journal ─────────────────────────────────────────────────────────────────
 
 model JournalLog {
   id        String    @id @default(uuid()) @db.Uuid
@@ -154,11 +142,9 @@ model JournalLog {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  @@unique([userId, log_date])                      // 1 entri per user per tanggal
+  @@unique([userId, log_date])
   @@index([userId, log_date])
 }
-
-// ─── Notification Preferences ────────────────────────────────────────────────
 
 model NotificationSetting {
   id                String   @id @default(uuid()) @db.Uuid
@@ -167,22 +153,18 @@ model NotificationSetting {
 
   enabled           Boolean  @default(true)
 
-  // Jam pengingat (WITA)
-  reminder_hour     Int      @default(19)           // 19:00 default
+  reminder_hour     Int      @default(19)
   reminder_minute   Int      @default(0)
 
-  // Hari pengingat mingguan TTD (0=Minggu, 1=Senin, ..., 5=Jumat default, 6=Sabtu)
   weekly_day        Int      @default(5)
 
-  // Toggle per kategori
-  ttd_daily         Boolean  @default(true)         // saat haid
-  ttd_weekly        Boolean  @default(true)         // rutin mingguan
-  period_start      Boolean  @default(true)         // auto-close haid
-  period_prediction Boolean  @default(true)         // 2 hari sebelum prediksi
+  ttd_daily         Boolean  @default(true)
+  ttd_weekly        Boolean  @default(true)
+  period_start      Boolean  @default(true)
+  period_prediction Boolean  @default(true)
   low_stock         Boolean  @default(true)
   badge_earned      Boolean  @default(true)
 
-  // Quiet hours (jam-mulai s.d. jam-akhir, tidak kirim push)
   quiet_start_hour  Int      @default(21)
   quiet_end_hour    Int      @default(6)
 
@@ -190,15 +172,13 @@ model NotificationSetting {
   updatedAt         DateTime @updatedAt
 }
 
-// ─── Web Push Subscription ───────────────────────────────────────────────────
-
 model PushSubscription {
   id         String   @id @default(uuid()) @db.Uuid
   userId     String   @db.Uuid
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint   String   @unique                        // URL push service
-  p256dh     String                                  // public key client
-  auth       String                                  // auth secret
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
   user_agent String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -206,15 +186,12 @@ model PushSubscription {
   @@index([userId])
 }
 
-// ─── Offline Sync Idempotency ────────────────────────────────────────────────
-// Cegah replay saat outbox flush dua kali (dari device sama / device berbeda).
-
 model IdempotencyKey {
-  key       String   @id                             // UUID v7 dari client
+  key       String   @id
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@index([userId])
-  @@index([createdAt])                               // cron cleanup > 30 hari
+  @@index([createdAt])
 }

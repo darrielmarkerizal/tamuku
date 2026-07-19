@@ -8,12 +8,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Kunci enum Prisma Mood: HAPPY | CALM | SAD | ANGRY | TIRED | ANXIOUS
 export interface MoodMeta {
   value: "HAPPY" | "CALM" | "SAD" | "ANGRY" | "TIRED" | "ANXIOUS";
-  label: string;         // "senang"
-  labelUpper: string;    // "Senang"
-  slug: string;          // "senang" untuk query param
+  label: string;
+  labelUpper: string;
+  slug: string;
   Icon: LucideIcon;
   tone: string;          // Tailwind class utk background pill
 }

@@ -1,4 +1,4 @@
-// Operation types di outbox — subset dari mutation server yang di-mirror.
+
 
 export type OpType =
   | "logPeriodStart"
@@ -11,7 +11,7 @@ export type OpType =
 
 export interface OpBase {
   type: OpType;
-  idempotencyKey: string; // uuid v4
+  idempotencyKey: string;
   createdAt: number; // ms epoch
 }
 
@@ -37,7 +37,7 @@ export type Operation =
 export type OutboxStatus = "pending" | "syncing" | "failed";
 
 export interface OutboxEntry {
-  localId?: number; // auto-increment key
+  localId?: number;
   op: Operation;
   status: OutboxStatus;
   attempts: number;

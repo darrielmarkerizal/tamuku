@@ -23,7 +23,6 @@ import {
   unsubscribePush,
 } from "@/lib/push/client";
 
-// weekly_day: 0=Minggu..6=Sabtu
 const DAYS = [
   { value: 1, label: "Sen" },
   { value: 2, label: "Sel" },

@@ -139,7 +139,6 @@ export function getCategory(slug: string): FlashcardCategory | undefined {
   return CATEGORIES.find((c) => c.slug === slug);
 }
 
-// Flat lookup
 export const FLASHCARDS: (Flashcard & { category: string })[] =
   CATEGORIES.flatMap((c) => c.cards.map((card) => ({ ...card, category: c.slug })));
 

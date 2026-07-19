@@ -4,8 +4,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
-import { today } from "@/lib/date";
-import { evaluateStreak } from "@/lib/streak/engine";
+import {
+  addDays,
+  isoWeek,
+  startOfWeekMon,
+  today,
+  toIsoDate,
+} from "@/lib/date";
+import { evaluateStreak, isWeekComplete } from "@/lib/streak/engine";
+import { FREEZE_PER_MONTH, monthKeyOf } from "@/lib/streak/freeze";
 import { pickNextForUser } from "@/lib/flashcards/pick";
 import { currentTtdMode } from "./schedule";
 
@@ -17,12 +24,6 @@ export interface LogTtdSuccess {
   flashcardIds: string[];
 }
 
-// ─── Log konsumsi ────────────────────────────────────────────────────────────
-
-/**
- * Log konsumsi TTD hari ini. Unique (userId, log_date) mencegah double log.
- * Kurangi inventory_ttd jika > 0. Tulis InventoryAdjustment sebagai audit.
- */
 export async function logTtdAction(): Promise<
   TtdActionResult<LogTtdSuccess>
 > {
@@ -62,7 +63,6 @@ export async function logTtdAction(): Promise<
       },
     });
 
-    // Fetch current inventory to decide adjustment
     const current = await tx.user.findUnique({
       where: { id: user.id },
       select: { inventory_ttd: true },
@@ -82,8 +82,6 @@ export async function logTtdAction(): Promise<
     }
   });
 
-  // Update streak realtime — kalau gagal, skip diam-diam (streak bisa
-  // di-recovery cron badge harian).
   try {
     await updateStreakForUser(user.id);
   } catch {}
@@ -94,12 +92,8 @@ export async function logTtdAction(): Promise<
   return { ok: true, data: { flashcardIds } };
 }
 
-/**
- * Hitung ulang streak user dari semua TtdLog + MenstruationLog, update
- * user.streak_current, streak_longest, streak_last_week_iso.
- */
 export async function updateStreakForUser(userId: string) {
-  const [logs, periods, notif] = await Promise.all([
+  const [logs, periods, notif, user] = await Promise.all([
     db.ttdLog.findMany({
       where: { userId },
       select: { log_date: true },
@@ -112,20 +106,73 @@ export async function updateStreakForUser(userId: string) {
       where: { userId },
       select: { weekly_day: true },
     }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        streak_freeze_weeks: true,
+        streak_freeze_left: true,
+        streak_freeze_month: true,
+      },
+    }),
   ]);
-  const summary = evaluateStreak(logs, periods, notif?.weekly_day ?? 5);
+  if (!user) return { current: 0, longest: 0, lastWeekIso: null };
+
+  const weeklyDay = notif?.weekly_day ?? 5;
+  const reference = today();
+  const monthKey = monthKeyOf(reference);
+
+  let freezeLeft =
+    user.streak_freeze_month === monthKey
+      ? user.streak_freeze_left
+      : FREEZE_PER_MONTH;
+  const frozen = new Set(user.streak_freeze_weeks);
+
+  const lastWeekStart = addDays(startOfWeekMon(reference), -7);
+  const lastWeekIso = isoWeek(lastWeekStart);
+
+  if (freezeLeft > 0 && !frozen.has(lastWeekIso)) {
+    const loggedLastWeek = new Set(
+      logs
+        .filter((l) => isoWeek(l.log_date) === lastWeekIso)
+        .map((l) => toIsoDate(l.log_date))
+    );
+    const lastWeekOk = isWeekComplete(
+      lastWeekStart,
+      loggedLastWeek,
+      periods,
+      weeklyDay,
+      reference
+    );
+
+    if (!lastWeekOk) {
+      const before = evaluateStreak(
+        logs,
+        periods,
+        weeklyDay,
+        addDays(lastWeekStart, -1),
+        frozen
+      );
+      if (before.current > 0) {
+        frozen.add(lastWeekIso);
+        freezeLeft -= 1;
+      }
+    }
+  }
+
+  const summary = evaluateStreak(logs, periods, weeklyDay, reference, frozen);
   await db.user.update({
     where: { id: userId },
     data: {
       streak_current: summary.current,
       streak_longest: summary.longest,
       streak_last_week_iso: summary.lastWeekIso,
+      streak_freeze_weeks: Array.from(frozen),
+      streak_freeze_left: freezeLeft,
+      streak_freeze_month: monthKey,
     },
   });
   return summary;
 }
-
-// ─── Tambah stok ─────────────────────────────────────────────────────────────
 
 const addStockSchema = z.object({
   pills: z.coerce.number().int().min(1).max(500),
@@ -165,8 +212,6 @@ export async function addStockAction(
   revalidatePath("/ttd/riwayat");
   return { ok: true };
 }
-
-// ─── Koreksi stok (set nilai absolut) ────────────────────────────────────────
 
 const correctStockSchema = z.object({
   new_value: z.coerce.number().int().min(0).max(500),
