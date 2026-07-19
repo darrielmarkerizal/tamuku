@@ -17,7 +17,6 @@ import {
 import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/cn";
 import { requireUser } from "@/lib/auth/current-user";
-import { db } from "@/lib/db";
 import { addDays, today } from "@/lib/date";
 import { BADGES } from "@/lib/badges/rules";
 import { buildSnapshot } from "@/lib/badges/snapshot";
@@ -51,34 +50,22 @@ export default async function ProfilPage() {
   const todayDate = today();
   const cutoff30 = addDays(todayDate, -30);
 
-  const [ttdLogs30, periodsClosed, ttdLogs14] = await Promise.all([
-    db.ttdLog.count({
-      where: { userId: user.id, log_date: { gte: cutoff30 } },
-    }),
-    db.menstruationLog.count({
-      where: { userId: user.id, end_date: { not: null } },
-    }),
-    db.ttdLog.findMany({
-      where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
-      select: { log_date: true },
-    }),
-  ]);
+  const cutoff14 = addDays(todayDate, -14);
+
+  const snapshot = await buildSnapshot(user.id);
+  const ttdLogs = snapshot?.ttdLogs ?? [];
+  const periods = snapshot?.periods ?? [];
+
+  const ttdLogs30 = ttdLogs.filter((l) => l.log_date >= cutoff30).length;
+  const ttdLogs14 = ttdLogs.filter((l) => l.log_date >= cutoff14);
+  const periodsClosed = periods.filter((p) => p.end_date !== null).length;
 
   const complianceTarget = 30;
   const compliancePct = Math.min(
     100,
     Math.round((ttdLogs30 / complianceTarget) * 100)
   );
-
-  const [periods14, snapshot] = await Promise.all([
-    db.menstruationLog.findMany({
-      where: { userId: user.id },
-      select: { start_date: true, end_date: true },
-    }),
-
-    buildSnapshot(user.id),
-  ]);
-  const mascotState = computeMascotState(ttdLogs14, periods14, todayDate);
+  const mascotState = computeMascotState(ttdLogs14, periods, todayDate);
 
   const stats: Stat[] = [
     { Icon: Flame, value: String(user.streak_current), label: "MINGGU STREAK" },

@@ -249,6 +249,31 @@
   }
 }
 
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes nav-hint {
+  to {
+    opacity: 1;
+  }
+}
+
+@utility skeleton-retro {
+  animation: blink-soft 1.2s ease-in-out infinite;
+}
+
+@utility nav-pending {
+  opacity: 0;
+  animation: nav-hint 160ms ease-out 120ms forwards;
+}
+
 @utility animate-bob {
   animation: bob 1.6s ease-in-out infinite;
 }

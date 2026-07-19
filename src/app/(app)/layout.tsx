@@ -8,7 +8,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh flex flex-col bg-bg pb-32">
+    <div className="min-h-dvh w-full max-w-md mx-auto flex flex-col bg-bg pb-32">
       <HydrateOffline />
       {children}
       <IosInstallHint />

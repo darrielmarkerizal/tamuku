@@ -38,7 +38,6 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
     cr: `${(i % 3) * 120 + 180}deg`,
     color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
     delay: `${(i % 4) * 40}ms`,
-    square: i % 3 === 0,
   };
 });
 
@@ -91,9 +90,7 @@ export function RewardBurst({
             <span
               key={p.id}
               aria-hidden="true"
-              className={`absolute size-3 border-2 border-ink ${p.color} ${
-                p.square ? "rounded-[2px]" : "rounded-full"
-              } animate-[confetti-fly_900ms_cubic-bezier(0.16,1,0.3,1)_forwards]`}
+              className={`absolute size-3 border-2 border-ink ${p.color} animate-[confetti-fly_900ms_cubic-bezier(0.16,1,0.3,1)_forwards]`}
               style={
                 {
                   "--cx": p.cx,
