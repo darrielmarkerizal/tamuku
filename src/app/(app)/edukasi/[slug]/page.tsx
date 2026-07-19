@@ -44,10 +44,10 @@ export default async function EdukasiKategoriPage({ params }: Props) {
 
       <main className="px-5 flex flex-col gap-3 mt-2">
         <div className="flex justify-between items-center pb-1">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          <span className="label-micro text-text-muted">
             {category.cards.length} KARTU
           </span>
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong">
+          <span className="label-micro text-primary-strong">
             TAP UNTUK BUKA
           </span>
         </div>

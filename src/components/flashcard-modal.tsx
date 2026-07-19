@@ -41,7 +41,7 @@ export function FlashcardModal({ ids, onClose }: FlashcardModalProps) {
     >
       <div className="w-full max-w-sm bg-accent-yellow border-2 border-ink rounded-[16px] p-6 flex flex-col shadow-retro-lg animate-[bounce-in_0.4s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]">
         <div className="flex justify-between items-center mb-6">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink bg-surface px-3 py-1.5 border-2 border-ink shadow-retro-sm rounded-full">
+          <span className="label-micro text-ink bg-surface px-3 py-1.5 border-2 border-ink shadow-retro-sm rounded-full">
             KARTU {index + 1} DARI {cards.length}
           </span>
           <button

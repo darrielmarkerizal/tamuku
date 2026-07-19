@@ -85,14 +85,14 @@ export function SyncDebugClient() {
       </div>
 
       <div className="flex justify-between items-center">
-        <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+        <h2 className="label-micro text-text-muted">
           ANTRIAN OUTBOX ({entries.length})
         </h2>
         <button
           type="button"
           onClick={handleFlush}
           disabled={busy}
-          className="bg-primary text-white font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 border-2 border-ink rounded-[8px] shadow-retro-sm press-retro disabled:opacity-70 inline-flex items-center gap-1"
+          className="bg-primary text-white label-micro px-3 py-1 border-2 border-ink rounded-[8px] shadow-retro-sm press-retro disabled:opacity-70 inline-flex items-center gap-1"
         >
           <RefreshCcw className="size-3" strokeWidth={3} />
           {busy ? "SYNC…" : "SYNC SEKARANG"}
@@ -163,7 +163,7 @@ function StatusPill({ status }: { status: OutboxEntry["status"] }) {
   } as const;
   return (
     <span
-      className={`shrink-0 font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-ink rounded-full ${map[status]}`}
+      className={`shrink-0 font-mono text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-ink rounded-full ${map[status]}`}
     >
       {status}
     </span>

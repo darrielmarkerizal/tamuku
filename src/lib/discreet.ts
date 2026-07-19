@@ -1,15 +1,3 @@
-/**
- * Mode diskret.
- *
- * Tamuku dibuka di HP yang sering dilihat — teman sebangku, saudara, kadang
- * dipinjam. Judul sebesar "HARI KE-3 HAID KAMU" dengan huruf kapital tebal
- * bikin sebagian siswi memilih tidak membuka app-nya di sekolah sama sekali.
- *
- * Mode ini menetralkan kata dan warna yang paling menarik perhatian, tanpa
- * mengubah data atau fungsi apa pun. Menstruasi tetap dicatat dan diprediksi
- * seperti biasa — yang berubah cuma bagaimana layarnya terbaca sekilas.
- */
-
 export interface AppCopy {
   statusEyebrow: string;
   periodDayHeadline: (day: number) => string;
@@ -24,23 +12,20 @@ export interface AppCopy {
   ttdModeMenstruating: string;
   ttdModeWeekly: string;
 
-  /** Kelas warna sel kalender untuk hari haid tercatat. */
   periodCellClass: string;
-  /** Warna angka di sel tersebut — harus kontras dengan periodCellClass. */
+
   periodCellTextClass: string;
-  /** Kelas warna sel kalender untuk prediksi. */
+
   predictionCellClass: string;
   calendarPeriodLabel: string;
   calendarPredictionLabel: string;
   calendarLogCta: string;
 
-  /** Dipakai cron push — judul & isi notifikasi. */
   pushDailyTitle: string;
   pushDailyBody: string;
   pushWeeklyTitle: string;
   pushWeeklyBody: string;
 
-  /** Kalimat sapaan saat sedang haid. */
   greetingMenstruating: string[];
 }
 
@@ -93,8 +78,6 @@ const DISCREET: AppCopy = {
   ttdModeMenstruating: "Mode harian.",
   ttdModeWeekly: "Mode mingguan — jangan lupa Jumat.",
 
-  // Merah pekat adalah yang paling cepat terbaca dari kejauhan. Peach masih
-  // membedakan hari dengan jelas tapi tidak langsung mengumumkan apa isinya.
   periodCellClass: "bg-accent-peach",
   periodCellTextClass: "text-ink",
   predictionCellClass: "bg-pink-soft",

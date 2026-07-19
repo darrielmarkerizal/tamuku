@@ -230,7 +230,7 @@ export default async function KalenderPage({ searchParams }: PageProps) {
               ? `Berdasarkan ${Math.min(validCycles.length, 3)} siklus terakhir.`
               : "Belum ada siklus tercatat — pakai default 28 hari."}
           </p>
-          <span className="inline-flex items-center bg-pink-cream text-ink px-3 py-1 rounded-full border-2 border-ink font-mono text-[10px] font-bold uppercase tracking-wider">
+          <span className="inline-flex items-center bg-pink-cream text-ink px-3 py-1 rounded-full border-2 border-ink label-micro">
             Kepercayaan: {confidence}
           </span>
         </div>

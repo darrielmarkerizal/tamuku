@@ -40,7 +40,7 @@ export function EdukasiDetailClient({ cards, seenIds }: Props) {
                 <BookOpen className="size-5 text-ink" strokeWidth={2.5} />
               </div>
               <div className="flex-1 flex flex-col min-w-0">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted flex items-center gap-1">
+                <span className="label-micro text-text-muted flex items-center gap-1">
                   KARTU {String(i + 1).padStart(2, "0")}
                   {seenSet.has(c.id) && (
                     <Check

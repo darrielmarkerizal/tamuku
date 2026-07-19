@@ -3,13 +3,6 @@ import { addDays, today } from "@/lib/date";
 import { FLASHCARDS } from "@/content/flashcards";
 import type { UserSnapshot } from "./rules";
 
-/**
- * Kumpulkan semua data yang dibutuhkan aturan badge.
- *
- * Dipakai bersama oleh cron evaluasi dan halaman profil — halaman profil butuh
- * snapshot yang sama untuk menampilkan progres badge yang belum terbuka, dan
- * kalau kedua tempat menghitungnya sendiri-sendiri angkanya pasti akan berbeda.
- */
 export async function buildSnapshot(
   userId: string
 ): Promise<UserSnapshot | null> {
@@ -38,8 +31,6 @@ export async function buildSnapshot(
 
   if (!user) return null;
 
-  // Kartu yang sudah dihapus dari konten tidak boleh ikut dihitung — kalau
-  // tidak, "tuntas belajar" bisa lewat target tanpa kartunya benar-benar ada.
   const validIds = new Set(FLASHCARDS.map((f) => f.id));
   const flashcardsSeen = user.seen_flashcards.filter((id) =>
     validIds.has(id)

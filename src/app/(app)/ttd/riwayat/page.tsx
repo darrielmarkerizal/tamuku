@@ -113,7 +113,7 @@ export default async function TtdRiwayatPage() {
             (g) =>
               g.items.length > 0 && (
                 <section key={g.label}>
-                  <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-3">
+                  <h2 className="label-micro text-text-muted mb-3">
                     {g.label}
                   </h2>
                   <div className="flex flex-col gap-3">
@@ -157,11 +157,11 @@ function LogRow({ item }: { item: LogItem }) {
         <h3 className="font-sans text-base font-bold text-ink leading-tight truncate">
           {item.title}
         </h3>
-        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mt-1">
+        <p className="label-micro text-text-muted mt-1">
           {item.detail}
         </p>
       </div>
-      <span className="shrink-0 px-2 py-1 bg-pink-cream border-2 border-ink rounded-full shadow-retro-sm font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+      <span className="shrink-0 px-2 py-1 bg-pink-cream border-2 border-ink rounded-full shadow-retro-sm label-micro text-ink">
         {item.badge}
       </span>
     </div>

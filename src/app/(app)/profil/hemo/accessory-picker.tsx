@@ -34,8 +34,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
   function choose(next: MascotAccessory | null) {
     if (next === selected) return;
     const previous = selected;
-    // Ganti tampilan dulu supaya pratinjau terasa instan; kembalikan kalau
-    // server menolak (mis. aksesori belum kebuka).
+
     setSelected(next);
     setError(null);
 
@@ -52,7 +51,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Pratinjau besar — pilihan apa pun langsung kelihatan di sini */}
+
       <section className="bg-accent-yellow border-2 border-ink rounded-[12px] shadow-retro p-6 flex items-center justify-center">
         <Mascot state={state} accessory={selected} size={160} bob />
       </section>
@@ -83,7 +82,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
           />
           <span
             className={cn(
-              "font-mono text-[9px] font-bold uppercase tracking-wider",
+              "font-mono text-[11px] font-bold uppercase tracking-wider",
               selected === null ? "text-white" : "text-ink"
             )}
           >
@@ -113,8 +112,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
                   : "opacity-60 grayscale cursor-not-allowed"
               )}
             >
-              {/* Pratinjau kecil pakai maskot yang sama, bukan ikon generik —
-                  user harus bisa lihat bentuk aslinya sebelum memilih. */}
+
               <Mascot
                 state="cheerful"
                 accessory={opt.accessory}
@@ -123,7 +121,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
               />
               <span
                 className={cn(
-                  "font-mono text-[9px] font-bold uppercase tracking-wider leading-none",
+                  "font-mono text-[11px] font-bold uppercase tracking-wider leading-none",
                   active ? "text-white" : "text-ink"
                 )}
               >
@@ -139,7 +137,7 @@ export function AccessoryPicker({ state, options, initial }: Props) {
         })}
       </div>
 
-      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted text-center">
+      <p className="label-micro text-text-muted text-center">
         {options.filter((o) => o.unlocked).length} DARI {options.length} KEBUKA
       </p>
     </div>

@@ -73,7 +73,7 @@ export default function CatatHaidManualPage() {
           <section className="flex flex-col gap-3">
             <label
               htmlFor="start_iso"
-              className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted"
+              className="label-micro text-text-muted"
             >
               TANGGAL MULAI HAID
             </label>
@@ -98,7 +98,7 @@ export default function CatatHaidManualPage() {
           <section className="flex flex-col gap-3">
             <label
               htmlFor="end_iso"
-              className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted"
+              className="label-micro text-text-muted"
             >
               TANGGAL SELESAI HAID (OPSIONAL)
             </label>

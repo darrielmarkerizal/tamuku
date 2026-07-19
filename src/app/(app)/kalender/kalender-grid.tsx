@@ -217,7 +217,7 @@ function DayDetailSheet({
         <div className="px-5 pb-8 flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+              <p className="label-micro text-text-muted">
                 {status.label}
               </p>
               <h2 className="font-display text-2xl font-extrabold text-ink uppercase mt-1">

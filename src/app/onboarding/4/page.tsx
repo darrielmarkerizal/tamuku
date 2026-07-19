@@ -56,7 +56,7 @@ export default function OnboardingStep4Page() {
       </section>
 
       <section className="flex flex-col gap-4 mt-8">
-        <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+        <h2 className="label-micro text-text-muted">
           Pilih Hari
         </h2>
         <div className="flex gap-2 overflow-x-auto pb-4 -mx-5 px-5 snap-x [&::-webkit-scrollbar]:hidden">
@@ -80,7 +80,7 @@ export default function OnboardingStep4Page() {
       </section>
 
       <section className="flex flex-col gap-4 py-6">
-        <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+        <h2 className="label-micro text-text-muted">
           Pilih Waktu
         </h2>
         <TimePicker

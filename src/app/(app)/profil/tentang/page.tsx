@@ -43,20 +43,20 @@ export default function TentangPage() {
             Teman haid & TTD untuk siswi SMP. Hangat, ramah, offline-first.
           </p>
           <div className="inline-flex bg-surface border-2 border-ink rounded-full px-3 py-1 shadow-retro-sm">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+            <span className="label-micro text-ink">
               VERSI 1.0.0 • MOCK
             </span>
           </div>
         </section>
 
         <section className="bg-surface border-2 border-ink rounded-[12px] shadow-retro p-5">
-          <h3 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted border-b-2 border-pink-cream pb-2 mb-4">
+          <h3 className="label-micro text-text-muted border-b-2 border-pink-cream pb-2 mb-4">
             TIM PEMBUAT
           </h3>
           <ul className="flex flex-col gap-4">
             {CREDITS.map((c) => (
               <li key={c.role} className="flex flex-col">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                <span className="label-micro text-text-muted">
                   {c.role}
                 </span>
                 <span className="font-display text-base font-extrabold text-ink">

@@ -200,7 +200,7 @@ export function NotifikasiForm({ initial }: Props) {
               type="button"
               onClick={handleTogglePush}
               disabled={pushBusy}
-              className="shrink-0 bg-primary text-white font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-2 border-2 border-ink rounded-[8px] shadow-retro-sm press-retro disabled:opacity-70"
+              className="shrink-0 bg-primary text-white label-micro px-3 py-2 border-2 border-ink rounded-[8px] shadow-retro-sm press-retro disabled:opacity-70"
             >
               {pushBusy
                 ? "…"
@@ -228,7 +228,7 @@ export function NotifikasiForm({ initial }: Props) {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          <h2 className="label-micro text-text-muted">
             HARI PENGINGAT MINGGUAN
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x [&::-webkit-scrollbar]:hidden">
@@ -252,7 +252,7 @@ export function NotifikasiForm({ initial }: Props) {
         </section>
 
         <section className="flex flex-col gap-4 py-2">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          <h2 className="label-micro text-text-muted">
             JAM PENGINGAT
           </h2>
           <TimePicker
@@ -264,7 +264,7 @@ export function NotifikasiForm({ initial }: Props) {
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          <h2 className="label-micro text-text-muted">
             JENIS NOTIFIKASI
           </h2>
           {channels.map((c, i) => (

@@ -89,7 +89,7 @@ export function JournalForm({
         </Link>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-yellow border-2 border-ink rounded-full shadow-retro-sm">
           <Calendar className="size-4 text-ink" strokeWidth={2.75} />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+          <span className="label-micro text-ink">
             {dateLabel}
           </span>
         </div>
@@ -121,7 +121,7 @@ export function JournalForm({
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+                  <span className="label-micro text-ink">
                     {m.label}
                   </span>
                 </button>

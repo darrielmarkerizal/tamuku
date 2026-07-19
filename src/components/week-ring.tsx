@@ -2,25 +2,15 @@ import { Flame, Snowflake } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { DayStatus, WeekDay } from "@/lib/streak/week-progress";
 
-/**
- * Ring 7 segmen: satu segmen per hari di minggu berjalan.
- *
- * Menggantikan angka streak polos. Angka streak sendiri hanya berubah seminggu
- * sekali; ring ini memberi sesuatu yang bergerak setiap hari sehingga membuka
- * app terasa ada gunanya walau streak-nya belum bertambah.
- */
-
 const SEGMENT_FILL: Record<DayStatus, string> = {
-  // Sudah dilakukan — warna penuh, ini yang ingin dikumpulkan.
   done: "#ff3d8a",
-  // Hari ini dan belum dilakukan — kuning menarik mata tanpa menghakimi.
+
   due: "#ffd66b",
-  // Terlewat. Sengaja bukan merah: ini aplikasi kesehatan untuk remaja,
-  // rasa bersalah menurunkan kepatuhan alih-alih menaikkannya.
+
   missed: "#e8c4d2",
-  // Hari wajib yang belum datang.
+
   upcoming: "#ffe4ec",
-  // Bukan hari wajib.
+
   rest: "#fff0f2",
 };
 
@@ -31,11 +21,11 @@ const SEGMENT_LENGTH = CIRCUMFERENCE / 7 - SEGMENT_GAP;
 
 interface WeekRingProps {
   days: WeekDay[];
-  /** Jumlah minggu berturut yang sudah lengkap. */
+
   streak: number;
-  /** Sisa target minggu ini (termasuk hari yang belum datang). */
+
   remaining: number;
-  /** Jatah streak freeze yang masih tersedia bulan ini. */
+
   freezeLeft: number;
   className?: string;
 }
@@ -62,7 +52,7 @@ export function WeekRing({
           title="Streak freeze tersedia — satu minggu terlewat tidak akan menghapus streak kamu."
         >
           <Snowflake className="size-3 text-ink" strokeWidth={3} />
-          <span className="font-mono text-[9px] font-bold text-ink">
+          <span className="font-mono text-[11px] font-bold text-ink">
             {freezeLeft}
           </span>
         </span>
@@ -85,13 +75,12 @@ export function WeekRing({
               stroke={SEGMENT_FILL[day.status]}
               strokeWidth="11"
               strokeLinecap="butt"
-              // Tiap segmen adalah satu garis putus-putus yang panjangnya
-              // seperempat lingkaran, digeser ke posisinya lewat dashoffset.
+
               strokeDasharray={`${SEGMENT_LENGTH} ${CIRCUMFERENCE - SEGMENT_LENGTH}`}
               strokeDashoffset={-((CIRCUMFERENCE / 7) * i)}
             />
           ))}
-          {/* Garis tepi retro — digambar terakhir supaya menutupi ujung segmen */}
+
           <circle
             cx="50"
             cy="50"
@@ -118,22 +107,20 @@ export function WeekRing({
         </div>
       </div>
 
-      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mt-2">
+      <p className="label-micro text-ink mt-2">
         MINGGU BERTURUT
       </p>
 
-      {/* Gradien tujuan: paling kuat justru di langkah terakhir, jadi sisa
-          satu target diberi perlakuan berbeda dari sisa banyak. */}
       {remaining === 1 ? (
-        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong mt-1 animate-[pop_600ms_ease-out]">
+        <p className="label-micro text-primary-strong mt-1 animate-[pop_600ms_ease-out]">
           1 LAGI!
         </p>
       ) : remaining > 1 ? (
-        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mt-1">
+        <p className="label-micro text-text-muted mt-1">
           {remaining} LAGI MINGGU INI
         </p>
       ) : (
-        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-success mt-1">
+        <p className="label-micro text-success mt-1">
           MINGGU INI AMAN
         </p>
       )}

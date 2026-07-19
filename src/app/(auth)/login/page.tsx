@@ -99,7 +99,7 @@ export default function LoginPage() {
           <div className="flex justify-end -mt-1">
             <a
               href="mailto:halo@tamuku.id?subject=Lupa%20Password%20Tamuku&body=Halo%20tim%20Tamuku%2C%20saya%20lupa%20password%20akun%20saya%3A%20"
-              className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary-strong hover:underline underline-offset-2"
+              className="label-soft text-primary-strong hover:underline underline-offset-2"
             >
               Lupa password?
             </a>

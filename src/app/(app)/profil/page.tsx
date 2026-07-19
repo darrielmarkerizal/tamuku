@@ -87,6 +87,10 @@ export default async function ProfilPage() {
     return ratioOf(b) - ratioOf(a);
   });
 
+  const LOCKED_PREVIEW = 6;
+  const visibleBadges = sortedBadges.slice(0, owned.size + LOCKED_PREVIEW);
+  const hiddenBadgeCount = BADGES.length - visibleBadges.length;
+
   return (
     <>
       <header className="px-5 pt-6 pb-2 flex justify-between items-center">
@@ -122,7 +126,7 @@ export default async function ProfilPage() {
             </h2>
             {schoolLine && (
               <div className="inline-flex bg-surface border-2 border-ink rounded-full px-3 py-1 shadow-retro-sm w-max max-w-full">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink truncate">
+                <span className="label-micro text-ink truncate">
                   {schoolLine}
                 </span>
               </div>
@@ -139,7 +143,7 @@ export default async function ProfilPage() {
               >
                 <s.Icon className="size-8 text-primary-strong" strokeWidth={2.5} />
                 <div className="font-mono text-2xl font-bold text-ink">{s.value}</div>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                <span className="label-micro text-text-muted">
                   {s.label}
                 </span>
               </div>
@@ -152,12 +156,25 @@ export default async function ProfilPage() {
             <h3 className="font-display text-lg font-extrabold uppercase text-ink">
               LENCANA KAMU
             </h3>
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+            <span className="label-micro text-text-muted">
               {owned.size} / {BADGES.length}
             </span>
           </div>
+          {owned.size === 0 && (
+            <div className="bg-accent-mint border-2 border-ink rounded-[12px] shadow-retro-sm p-4 flex items-center gap-3">
+              <Sparkles
+                className="size-6 text-ink shrink-0"
+                strokeWidth={2.5}
+                aria-hidden="true"
+              />
+              <p className="font-sans text-sm text-ink leading-snug">
+                Belum ada lencana. Yang paling gampang cuma butuh satu TTD
+                tercatat — habis itu langsung kebuka.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-            {sortedBadges.map((b) => {
+            {visibleBadges.map((b) => {
               const locked = !owned.has(b.slug);
               const current = snapshot ? Math.min(b.progress(snapshot), b.target) : 0;
               const pct = b.target === 0 ? 0 : (current / b.target) * 100;
@@ -191,7 +208,7 @@ export default async function ProfilPage() {
                   </div>
                   <span
                     className={cn(
-                      "font-mono text-[10px] font-bold uppercase tracking-wider leading-tight",
+                      "label-micro leading-tight",
                       locked ? "text-text-muted" : "text-ink"
                     )}
                   >
@@ -206,7 +223,7 @@ export default async function ProfilPage() {
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="font-mono text-[9px] font-bold text-text-muted">
+                      <span className="font-mono text-[11px] font-bold text-text-muted">
                         {current}/{b.target} {b.unit}
                       </span>
                     </div>
@@ -215,6 +232,11 @@ export default async function ProfilPage() {
               );
             })}
           </div>
+          {hiddenBadgeCount > 0 && (
+            <p className="font-sans text-sm text-text-muted text-center">
+              {hiddenBadgeCount} lencana lagi kebuka seiring kamu jalan.
+            </p>
+          )}
         </section>
 
         <section className="flex flex-col gap-3">
@@ -236,7 +258,7 @@ export default async function ProfilPage() {
         </section>
 
         <div className="w-full text-center py-4 mt-2">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          <span className="label-micro text-text-muted">
             <span className="inline-flex items-center gap-1.5">
               Tamuku v1.0 • Buat Sepaku
               <Heart className="size-3 text-primary-strong fill-primary-strong" strokeWidth={2.5} />

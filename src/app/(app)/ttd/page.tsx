@@ -88,7 +88,7 @@ export default async function TtdPage() {
 
       <main className="px-5 flex flex-col gap-6">
         <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro-lg p-5 flex flex-col items-center">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-2">
+          <span className="label-micro text-text-muted mb-2">
             SISA PIL
           </span>
           <div className="flex items-baseline gap-2 mb-4">
@@ -133,7 +133,7 @@ export default async function TtdPage() {
         </section>
 
         <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 border-b-2 border-ink pb-2">
+          <h2 className="label-micro text-text-muted mb-4 border-b-2 border-ink pb-2">
             JADWAL PENGINGAT
           </h2>
           <div className="flex flex-col gap-4 mb-4">
@@ -162,7 +162,7 @@ export default async function TtdPage() {
         </section>
 
         <section className="bg-surface rounded-[12px] border-2 border-ink shadow-retro p-5">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 border-b-2 border-ink pb-2">
+          <h2 className="label-micro text-text-muted mb-4 border-b-2 border-ink pb-2">
             {HEATMAP_DAYS} HARI TERAKHIR
           </h2>
           <div className="grid grid-cols-7 gap-2 mb-4 place-items-center">
@@ -180,7 +180,7 @@ export default async function TtdPage() {
               />
             ))}
           </div>
-          <div className="flex items-center justify-center gap-4 mt-4 font-mono text-[10px] font-bold uppercase tracking-wider flex-wrap">
+          <div className="flex items-center justify-center gap-4 mt-4 label-micro flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="size-3 bg-accent-mint border-2 border-ink" />
               Mingguan

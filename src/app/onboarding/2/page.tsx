@@ -115,7 +115,7 @@ export default function OnboardingStep2Page() {
         </div>
 
         <div>
-          <div className="grid grid-cols-7 gap-1 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 border-b-2 border-pink-cream pb-2">
+          <div className="grid grid-cols-7 gap-1 text-center label-micro text-text-muted mb-4 border-b-2 border-pink-cream pb-2">
             {WEEKDAY_HEADERS.map((d, i) => (
               <div key={i}>{d}</div>
             ))}

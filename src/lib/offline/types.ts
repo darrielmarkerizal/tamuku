@@ -1,5 +1,3 @@
-
-
 export type OpType =
   | "logPeriodStart"
   | "logPeriodEnd"

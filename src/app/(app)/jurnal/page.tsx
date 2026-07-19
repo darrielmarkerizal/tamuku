@@ -65,7 +65,7 @@ export default async function JurnalListPage() {
               <Mascot state="vibrant" size={112} />
             </div>
             <div className="z-20 relative pr-20 w-full">
-              <span className="inline-block bg-surface border-2 border-ink px-2 py-1 rounded-[6px] mb-3 font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+              <span className="inline-block bg-surface border-2 border-ink px-2 py-1 rounded-[6px] mb-3 label-micro text-ink">
                 HARI INI
               </span>
               <h2 className="font-display text-2xl font-extrabold text-ink mb-1 flex items-center gap-2">
@@ -135,7 +135,7 @@ export default async function JurnalListPage() {
                     />
                   </div>
                   <div className="flex-1 flex flex-col justify-center min-w-0">
-                    <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink mb-2">
+                    <h4 className="label-micro text-ink mb-2">
                       {formatDayShort(e.log_date)}, {formatShort(e.log_date)}
                     </h4>
                     {e.symptoms.length > 0 ? (
@@ -143,7 +143,7 @@ export default async function JurnalListPage() {
                         {e.symptoms.slice(0, 3).map((s) => (
                           <span
                             key={s}
-                            className="bg-pink-soft border-2 border-ink rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink"
+                            className="bg-pink-soft border-2 border-ink rounded-full px-2 py-0.5 label-micro text-ink"
                           >
                             {SYMPTOM_LABEL[s] ?? s}
                           </span>

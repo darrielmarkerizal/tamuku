@@ -57,8 +57,6 @@ export function evaluateStreak(
 
     if (complete) {
       if (streaking) current++;
-      // Longest: hitung run terpanjang dari data historis
-      // gampangnya: track run per iterasi
     } else {
       streaking = false;
     }

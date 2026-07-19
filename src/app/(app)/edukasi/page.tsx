@@ -40,7 +40,7 @@ export default async function EdukasiPage() {
       <main className="px-5 flex flex-col gap-7 pb-8">
         {unseenFirst && featuredCategory && (
           <section className="bg-accent-yellow border-2 border-ink rounded-[12px] p-5 shadow-retro relative overflow-hidden">
-            <span className="bg-surface text-ink font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 border-2 border-ink rounded-full mb-4 inline-block relative z-10">
+            <span className="bg-surface text-ink label-micro px-3 py-1 border-2 border-ink rounded-full mb-4 inline-block relative z-10">
               {seen.has(unseenFirst.id) ? "KARTU PILIHAN" : "KARTU HARI INI"}
             </span>
             <div className="flex flex-col gap-2 mb-6 relative z-10 pr-20">
@@ -84,7 +84,7 @@ export default async function EdukasiPage() {
                   className="size-8 text-ink"
                   strokeWidth={2.5}
                 />
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink leading-tight">
+                <span className="label-micro text-ink leading-tight">
                   {c.label}
                 </span>
                 <span className="font-mono text-[10px] font-bold text-ink/70">

@@ -71,7 +71,7 @@ export function EditProfileForm({ initial }: Props) {
         </section>
 
         <section className="bg-surface border-2 border-ink rounded-[12px] shadow-retro p-5 flex flex-col gap-4">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted border-b-2 border-pink-cream pb-2">
+          <h2 className="label-micro text-text-muted border-b-2 border-pink-cream pb-2">
             INFO PRIBADI
           </h2>
 
@@ -125,7 +125,7 @@ export function EditProfileForm({ initial }: Props) {
         </section>
 
         <section className="bg-surface border-2 border-ink rounded-[12px] shadow-retro p-5 flex flex-col gap-4">
-          <h2 className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted border-b-2 border-pink-cream pb-2">
+          <h2 className="label-micro text-text-muted border-b-2 border-pink-cream pb-2">
             INFO SEKOLAH
           </h2>
 

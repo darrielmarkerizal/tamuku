@@ -27,7 +27,7 @@ function NavTile({ item, current }: { item: NavItem; current: boolean }) {
   return (
     <span
       className={cn(
-        "relative flex flex-col items-center justify-center w-14 h-14 rounded-[10px] transition-all duration-200",
+        "relative flex flex-col items-center justify-center w-16 h-14 rounded-[10px] transition-all duration-200",
         active
           ? cn(
               SECTION_TONE[item.section].surface,
@@ -40,7 +40,7 @@ function NavTile({ item, current }: { item: NavItem; current: boolean }) {
         className={cn("size-5", active && "animate-[pop_320ms_ease-out]")}
         strokeWidth={active ? 2.75 : 2.25}
       />
-      <span className="font-mono text-[9px] font-bold mt-0.5 leading-none tracking-wider">
+      <span className="font-mono text-[10px] font-bold mt-0.5 leading-none tracking-wider">
         {item.label}
       </span>
       {pending && (
