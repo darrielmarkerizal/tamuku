@@ -30,14 +30,6 @@ const registerSchema = z.object({
   username: usernameSchema,
   password: passwordSchema,
   name: z.string().trim().min(1, "Nama wajib diisi").max(80),
-  email: z
-    .string()
-    .trim()
-    .email("Format email tidak valid")
-    .max(120)
-    .optional()
-    .or(z.literal("")),
-  school: z.string().trim().max(80).optional().or(z.literal("")),
   class_name: z.string().trim().max(20).optional().or(z.literal("")),
   guardian_aware: z
     .union([z.literal("on"), z.literal("true"), z.literal("false"), z.literal("")])
@@ -78,8 +70,6 @@ export async function registerAction(
     username: formData.get("username") ?? "",
     password: formData.get("password") ?? "",
     name: formData.get("name") ?? "",
-    email: formData.get("email") ?? "",
-    school: formData.get("school") ?? "",
     class_name: formData.get("class_name") ?? "",
     guardian_aware: formData.get("guardian_aware") ?? "",
   };
@@ -89,15 +79,7 @@ export async function registerAction(
     return { fieldErrors: collectFieldErrors(parsed.error) };
   }
 
-  const {
-    username,
-    password,
-    name,
-    email,
-    school,
-    class_name,
-    guardian_aware,
-  } = parsed.data;
+  const { username, password, name, class_name, guardian_aware } = parsed.data;
 
   if (guardian_aware !== "on" && guardian_aware !== "true") {
     return {
@@ -121,8 +103,6 @@ export async function registerAction(
       username,
       password: password_hash,
       name,
-      email: email || null,
-      school: school || null,
       class_name: class_name || null,
       guardian_aware: true,
       consent_accepted_at: new Date(),

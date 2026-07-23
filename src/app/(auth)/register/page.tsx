@@ -70,29 +70,7 @@ export default function RegisterPage() {
           </Field>
 
           <Field>
-            <Label htmlFor="email">Email (opsional)</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="nama@email.com"
-              autoComplete="email"
-              aria-invalid={!!state?.fieldErrors?.email}
-            />
-            {state?.fieldErrors?.email && (
-              <p className="font-sans text-xs text-danger px-1">
-                {state.fieldErrors.email}
-              </p>
-            )}
-          </Field>
-
-          <Field>
-            <Label htmlFor="school">Sekolah (opsional)</Label>
-            <Input id="school" name="school" placeholder="SMP 1 Sepaku" />
-          </Field>
-
-          <Field>
-            <Label htmlFor="class_name">Kelas (opsional)</Label>
+            <Label htmlFor="class_name">Kelas</Label>
             <Input id="class_name" name="class_name" placeholder="8A" />
           </Field>
 
