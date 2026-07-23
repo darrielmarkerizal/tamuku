@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Mascot } from "@/components/mascot";
+import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
 import { cn } from "@/lib/cn";
 import { FLASHCARDS_BY_ID } from "@/content/flashcards";
 import { markFlashcardSeenAction } from "@/lib/flashcards/actions";
@@ -19,6 +20,7 @@ export function FlashcardModal({ ids, onClose }: FlashcardModalProps) {
   );
   const [index, setIndex] = useState(0);
   const [pending, startTransition] = useTransition();
+  const [unlockedBadges, setUnlockedBadges] = useState<string[] | null>(null);
 
   if (cards.length === 0) return null;
 
@@ -28,8 +30,12 @@ export function FlashcardModal({ ids, onClose }: FlashcardModalProps) {
 
   function handleClose() {
     startTransition(async () => {
-      await markFlashcardSeenAction(ids);
-      onClose();
+      const res = await markFlashcardSeenAction(ids);
+      if (res.ok && res.newBadges.length > 0) {
+        setUnlockedBadges(res.newBadges);
+      } else {
+        onClose();
+      }
     });
   }
 
@@ -122,6 +128,10 @@ export function FlashcardModal({ ids, onClose }: FlashcardModalProps) {
           </button>
         </div>
       </div>
+
+      {unlockedBadges && (
+        <BadgeUnlockBurst slugs={unlockedBadges} onDone={onClose} />
+      )}
     </div>
   );
 }

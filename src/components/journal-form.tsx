@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
 import { cn } from "@/lib/cn";
 import { upsertJournalAction } from "@/lib/journal/actions";
 import { MOODS } from "@/lib/mood-icons";
@@ -42,6 +43,7 @@ export function JournalForm({
   const [note, setNote] = useState(initialNote);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [unlockedBadges, setUnlockedBadges] = useState<string[] | null>(null);
 
   const toggleSymptom = (s: string) => {
     setSymptoms((cur) =>
@@ -70,7 +72,14 @@ export function JournalForm({
         }
       );
       if (res.ok) {
-        router.push("/jurnal");
+        const data = !res.queued
+          ? (res.data as { newBadges?: string[] } | undefined)
+          : undefined;
+        if (data?.newBadges && data.newBadges.length > 0) {
+          setUnlockedBadges(data.newBadges);
+        } else {
+          router.push("/jurnal");
+        }
       } else {
         setError(res.error);
       }
@@ -191,6 +200,13 @@ export function JournalForm({
           {pending ? "MENYIMPAN…" : "SIMPAN JURNAL"}
         </Button>
       </div>
+
+      {unlockedBadges && (
+        <BadgeUnlockBurst
+          slugs={unlockedBadges}
+          onDone={() => router.push("/jurnal")}
+        />
+      )}
     </>
   );
 }

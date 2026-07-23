@@ -10,10 +10,11 @@ import {
   parseIsoDate,
   today,
 } from "@/lib/date";
+import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
 import { calcCycleLength } from "./sma";
 
 export type PeriodActionResult =
-  | { ok: true }
+  | { ok: true; data?: { newBadges: string[] } }
   | { ok: false; error: string };
 
 export async function logPeriodStartAction(): Promise<PeriodActionResult> {
@@ -132,9 +133,20 @@ export async function manualLogPeriodAction(
     },
   });
 
+  let newBadges: string[] = [];
+  if (end) {
+    try {
+      newBadges = await evaluateBadgesForUser(user.id);
+      if (newBadges.length > 0) {
+        revalidatePath("/profil");
+        revalidatePath("/profil/hemo");
+      }
+    } catch {}
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/kalender");
-  return { ok: true };
+  return { ok: true, data: { newBadges } };
 }
 
 export async function logPeriodEndAction(): Promise<PeriodActionResult> {
@@ -167,7 +179,16 @@ export async function logPeriodEndAction(): Promise<PeriodActionResult> {
     },
   });
 
+  let newBadges: string[] = [];
+  try {
+    newBadges = await evaluateBadgesForUser(user.id);
+    if (newBadges.length > 0) {
+      revalidatePath("/profil");
+      revalidatePath("/profil/hemo");
+    }
+  } catch {}
+
   revalidatePath("/dashboard");
   revalidatePath("/kalender");
-  return { ok: true };
+  return { ok: true, data: { newBadges } };
 }

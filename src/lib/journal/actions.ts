@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
+import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
 import { parseIsoDate } from "@/lib/date";
 import { Mood, Symptom } from "@/generated/prisma/enums";
 
 export type JournalActionResult =
-  | { ok: true }
+  | { ok: true; data?: { newBadges: string[] } }
   | { ok: false; error: string };
 
 const MOOD_VALUES = Object.values(Mood) as [string, ...string[]];
@@ -55,8 +56,17 @@ export async function upsertJournalAction(
     },
   });
 
+  let newBadges: string[] = [];
+  try {
+    newBadges = await evaluateBadgesForUser(user.id);
+    if (newBadges.length > 0) {
+      revalidatePath("/profil");
+      revalidatePath("/profil/hemo");
+    }
+  } catch {}
+
   revalidatePath("/jurnal");
   revalidatePath(`/jurnal/${parsed.data.log_date_iso}`);
   revalidatePath("/dashboard");
-  return { ok: true };
+  return { ok: true, data: { newBadges } };
 }

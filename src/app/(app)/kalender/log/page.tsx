@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { Button } from "@/components/ui/button";
 import { RetroToggle } from "@/components/retro-toggle";
+import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
 import { cn } from "@/lib/cn";
 import { manualLogPeriodAction } from "@/lib/period/actions";
 import { toIsoDate, today } from "@/lib/date";
@@ -19,6 +20,7 @@ export default function CatatHaidManualPage() {
   const [stillActive, setStillActive] = useState(true);
   const [startIso, setStartIso] = useState("");
   const [endIso, setEndIso] = useState("");
+  const [unlockedBadges, setUnlockedBadges] = useState<string[] | null>(null);
 
   const todayIso = toIsoDate(today());
 
@@ -45,7 +47,14 @@ export default function CatatHaidManualPage() {
       );
 
       if (res.ok) {
-        router.push("/kalender");
+        const data = !res.queued
+          ? (res.data as { newBadges?: string[] } | undefined)
+          : undefined;
+        if (data?.newBadges && data.newBadges.length > 0) {
+          setUnlockedBadges(data.newBadges);
+        } else {
+          router.push("/kalender");
+        }
       } else {
         setError(res.error);
       }
@@ -177,6 +186,13 @@ export default function CatatHaidManualPage() {
           </Button>
         </footer>
       </form>
+
+      {unlockedBadges && (
+        <BadgeUnlockBurst
+          slugs={unlockedBadges}
+          onDone={() => router.push("/kalender")}
+        />
+      )}
     </div>
   );
 }

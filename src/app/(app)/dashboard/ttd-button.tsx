@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { FlashcardModal } from "@/components/flashcard-modal";
 import { RewardBurst } from "@/components/reward-burst";
+import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
 import { logTtdAction } from "@/lib/ttd/actions";
 import { trySubmit } from "@/lib/offline/try-submit";
 
@@ -28,6 +29,8 @@ export function TtdButton({
   const [bursting, setBursting] = useState(false);
   const [flashcardIds, setFlashcardIds] = useState<string[] | null>(null);
   const [pendingCards, setPendingCards] = useState<string[] | null>(null);
+  const [pendingBadges, setPendingBadges] = useState<string[] | null>(null);
+  const [badgeBursting, setBadgeBursting] = useState(false);
 
   function handleClick() {
     setError(null);
@@ -40,13 +43,26 @@ export function TtdButton({
 
       setDoneNow(true);
       if (!res.queued) {
-        const data = res.data as { flashcardIds?: string[] } | undefined;
+        const data = res.data as
+          | { flashcardIds?: string[]; newBadges?: string[] }
+          | undefined;
         if (data?.flashcardIds && data.flashcardIds.length > 0) {
           setPendingCards(data.flashcardIds);
+        }
+        if (data?.newBadges && data.newBadges.length > 0) {
+          setPendingBadges(data.newBadges);
         }
       }
       setBursting(true);
     });
+  }
+
+  function showBadgesOrRefresh() {
+    if (pendingBadges && pendingBadges.length > 0) {
+      setBadgeBursting(true);
+    } else {
+      router.refresh();
+    }
   }
 
   function handleBurstDone() {
@@ -55,12 +71,18 @@ export function TtdButton({
       setFlashcardIds(pendingCards);
       setPendingCards(null);
     } else {
-      router.refresh();
+      showBadgesOrRefresh();
     }
   }
 
   function handleCardsClosed() {
     setFlashcardIds(null);
+    showBadgesOrRefresh();
+  }
+
+  function handleBadgeDone() {
+    setBadgeBursting(false);
+    setPendingBadges(null);
     router.refresh();
   }
 
@@ -98,6 +120,10 @@ export function TtdButton({
 
       {flashcardIds && (
         <FlashcardModal ids={flashcardIds} onClose={handleCardsClosed} />
+      )}
+
+      {badgeBursting && pendingBadges && (
+        <BadgeUnlockBurst slugs={pendingBadges} onDone={handleBadgeDone} />
       )}
     </div>
   );

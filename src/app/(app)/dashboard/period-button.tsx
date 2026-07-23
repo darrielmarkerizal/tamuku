@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Droplet } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
 import {
   logPeriodEndAction,
   logPeriodStartAction,
@@ -30,6 +31,7 @@ export function PeriodButton({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [unlockedBadges, setUnlockedBadges] = useState<string[] | null>(null);
 
   function handleClick() {
     setError(null);
@@ -41,6 +43,11 @@ export function PeriodButton({
         setError(res.error);
       } else if (res.queued) {
         router.refresh();
+      } else {
+        const data = res.data as { newBadges?: string[] } | undefined;
+        if (data?.newBadges && data.newBadges.length > 0) {
+          setUnlockedBadges(data.newBadges);
+        }
       }
     });
   }
@@ -78,6 +85,16 @@ export function PeriodButton({
         </span>
       </button>
       {error && <p className="font-sans text-sm text-danger px-1">{error}</p>}
+
+      {unlockedBadges && (
+        <BadgeUnlockBurst
+          slugs={unlockedBadges}
+          onDone={() => {
+            setUnlockedBadges(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

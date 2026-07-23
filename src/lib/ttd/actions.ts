@@ -14,6 +14,7 @@ import {
 import { evaluateStreak, isWeekComplete } from "@/lib/streak/engine";
 import { FREEZE_PER_MONTH, monthKeyOf } from "@/lib/streak/freeze";
 import { pickNextForUser } from "@/lib/flashcards/pick";
+import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
 import { currentTtdMode } from "./schedule";
 
 export type TtdActionResult<T = null> =
@@ -22,6 +23,7 @@ export type TtdActionResult<T = null> =
 
 export interface LogTtdSuccess {
   flashcardIds: string[];
+  newBadges: string[];
 }
 
 export async function logTtdAction(): Promise<
@@ -86,10 +88,19 @@ export async function logTtdAction(): Promise<
     await updateStreakForUser(user.id);
   } catch {}
 
+  let newBadges: string[] = [];
+  try {
+    newBadges = await evaluateBadgesForUser(user.id);
+    if (newBadges.length > 0) {
+      revalidatePath("/profil");
+      revalidatePath("/profil/hemo");
+    }
+  } catch {}
+
   revalidatePath("/dashboard");
   revalidatePath("/ttd");
   revalidatePath("/ttd/riwayat");
-  return { ok: true, data: { flashcardIds } };
+  return { ok: true, data: { flashcardIds, newBadges } };
 }
 
 export async function updateStreakForUser(userId: string) {
