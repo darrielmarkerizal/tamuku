@@ -9,9 +9,9 @@ type LinkItem = {
 };
 
 const LINKS: LinkItem[] = [
-  { Icon: ScrollText, label: "Syarat & ketentuan", href: "#" },
-  { Icon: ScrollText, label: "Kebijakan privasi", href: "#" },
-  { Icon: Mail, label: "Hubungi tim KKN", href: "mailto:halo@tamuku.id" },
+  { Icon: ScrollText, label: "Syarat & ketentuan", href: "/profil/syarat" },
+  { Icon: ScrollText, label: "Kebijakan privasi", href: "/profil/kebijakan-privasi" },
+  { Icon: Mail, label: "Hubungi kami", href: "mailto:halo@tamuku.id" },
   { Icon: Code2, label: "Lihat di GitHub", href: "https://github.com/darrielmarkerizal/tamuku" },
 ];
 
@@ -21,9 +21,7 @@ type Credit = {
 };
 
 const CREDITS: Credit[] = [
-  { role: "Lead Developer & Sistem", name: "Darriel Markerizal" },
-  { role: "Lead Edukasi & Distribusi", name: "Nisa Fredlina Mahardika Saputri" },
-  { role: "Program", name: "KKN Sepaku, Penajam Paser Utara" },
+  { role: "Pembuat Aplikasi", name: "Nisa Fredlina Mahardika Saputri" },
 ];
 
 export default function TentangPage() {
@@ -51,7 +49,7 @@ export default function TentangPage() {
 
         <section className="bg-surface border-2 border-ink rounded-[12px] shadow-retro p-5">
           <h3 className="label-micro text-text-muted border-b-2 border-pink-cream pb-2 mb-4">
-            TIM PEMBUAT
+            PEMBUAT
           </h3>
           <ul className="flex flex-col gap-4">
             {CREDITS.map((c) => (
