@@ -2,7 +2,7 @@ import { SubpageHeader } from "@/components/subpage-header";
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { addDays, today } from "@/lib/date";
-import { computeMascotState } from "@/lib/mascot-state";
+import { computeMascotStateFromJournal } from "@/lib/mascot-state";
 import { BADGES } from "@/lib/badges/rules";
 import type { MascotAccessory } from "@/components/mascot";
 import { AccessoryPicker } from "./accessory-picker";
@@ -11,18 +11,12 @@ export default async function HemoPage() {
   const user = await requireUser();
   const todayDate = today();
 
-  const [ttdLogs14, periods] = await Promise.all([
-    db.ttdLog.findMany({
-      where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
-      select: { log_date: true },
-    }),
-    db.menstruationLog.findMany({
-      where: { userId: user.id },
-      select: { start_date: true, end_date: true },
-    }),
-  ]);
+  const recentJournals = await db.journalLog.findMany({
+    where: { userId: user.id, log_date: { gte: addDays(todayDate, -2) } },
+    select: { log_date: true, mood: true },
+  });
 
-  const mascotState = computeMascotState(ttdLogs14, periods, todayDate);
+  const mascotState = computeMascotStateFromJournal(recentJournals, todayDate);
   const owned = new Set(user.badges);
 
   const options = BADGES.filter((b) => b.accessory).map((b) => ({

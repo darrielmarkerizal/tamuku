@@ -30,6 +30,7 @@ export type Operation =
       mood: string | null;
       symptoms: string[];
       notes: string;
+      menstruating: boolean;
     });
 
 export type OutboxStatus = "pending" | "syncing" | "failed";

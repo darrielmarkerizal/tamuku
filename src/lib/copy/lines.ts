@@ -55,27 +55,27 @@ export const REWARD_SUBS = [
 
 export const HEMO_LINES: Record<string, string[]> = {
   vibrant: [
-    "Aku lagi merah banget hari ini!",
-    "Kita lagi kompak nih.",
-    "Kamu konsisten banget, aku kagum.",
-    "Energi penuh. Ayo lanjut.",
+    "Kamu keliatan happy, aku ikut senang!",
+    "Energi kamu nular ke aku nih.",
+    "Hari kamu cerah, aku juga jadi merah!",
+    "Seneng banget lihat kamu ceria.",
   ],
   cheerful: [
-    "Lumayan nih, tinggal dijaga.",
-    "Aku udah lebih baik dari minggu lalu.",
-    "Dikit lagi aku merah maksimal.",
-    "Kita lagi bagus. Jangan kendor.",
+    "Adem ya hari ini. Aku nemenin.",
+    "Tenang gini enak, kan?",
+    "Aku di sini kalau kamu butuh cerita.",
+    "Santai bareng aku aja dulu.",
   ],
   tired: [
-    "Aku agak capek nih…",
-    "Udah lama nggak dapat TTD.",
-    "Bantu aku dikit dong.",
-    "Rasanya lemes, tapi masih kuat kok.",
+    "Kamu keliatan capek… istirahat dulu ya.",
+    "Nggak apa-apa, pelan-pelan aja.",
+    "Aku temani kamu rehat sebentar.",
+    "Capek itu wajar kok, jangan dipaksa.",
   ],
   pucat: [
-    "Aku pucat banget…",
-    "Butuh TTD nih, serius.",
-    "Warnaku hampir hilang…",
-    "Aku nunggu kamu dari kemarin.",
+    "Lagi berat ya? Aku di sini nemenin.",
+    "Boleh kok ngerasa nggak baik-baik aja.",
+    "Cerita ke jurnal aja, aku dengerin.",
+    "Aku nggak ke mana-mana, tenang.",
   ],
 };

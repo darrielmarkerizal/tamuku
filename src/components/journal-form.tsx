@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Droplet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BadgeUnlockBurst } from "@/components/badge-unlock-burst";
+import { RetroToggle } from "@/components/retro-toggle";
 import { cn } from "@/lib/cn";
 import { upsertJournalAction } from "@/lib/journal/actions";
 import { MOODS } from "@/lib/mood-icons";
@@ -26,6 +27,7 @@ interface JournalFormProps {
   initialMood?: string | null;
   initialSymptoms?: string[];
   initialNote?: string;
+  initialMenstruating?: boolean;
   backHref?: string;
 }
 
@@ -35,12 +37,14 @@ export function JournalForm({
   initialMood,
   initialSymptoms = [],
   initialNote = "",
+  initialMenstruating = false,
   backHref = "/jurnal",
 }: JournalFormProps) {
   const router = useRouter();
   const [mood, setMood] = useState<string | null>(initialMood ?? null);
   const [symptoms, setSymptoms] = useState<string[]>(initialSymptoms);
   const [note, setNote] = useState(initialNote);
+  const [menstruating, setMenstruating] = useState(initialMenstruating);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [unlockedBadges, setUnlockedBadges] = useState<string[] | null>(null);
@@ -61,6 +65,7 @@ export function JournalForm({
           if (mood) fd.set("mood", mood);
           for (const s of symptoms) fd.append("symptoms", s);
           fd.set("notes", note);
+          if (menstruating) fd.set("menstruating", "on");
           return upsertJournalAction(fd);
         },
         "upsertJournal",
@@ -69,6 +74,7 @@ export function JournalForm({
           mood,
           symptoms,
           notes: note,
+          menstruating,
         }
       );
       if (res.ok) {
@@ -137,6 +143,40 @@ export function JournalForm({
               );
             })}
           </div>
+        </section>
+
+        <section className="px-5 py-8 border-b-2 border-ink">
+          <button
+            type="button"
+            onClick={() => setMenstruating((v) => !v)}
+            className={cn(
+              "w-full flex items-center gap-3 border-2 border-ink rounded-[12px] p-4 text-left transition-all",
+              menstruating ? "bg-pink-soft shadow-retro" : "bg-surface shadow-retro-sm"
+            )}
+          >
+            <span className="size-11 shrink-0 bg-surface border-2 border-ink rounded-[8px] flex items-center justify-center">
+              <Droplet
+                className="size-5 text-primary-strong"
+                strokeWidth={2.75}
+                fill={menstruating ? "currentColor" : "none"}
+                aria-hidden="true"
+              />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-display text-lg font-extrabold uppercase text-ink leading-tight">
+                Lagi haid hari ini?
+              </span>
+              <span className="block font-sans text-sm text-text-muted leading-tight mt-0.5">
+                Biar kalender & prediksi siklus ikut kecatat.
+              </span>
+            </span>
+            <RetroToggle
+              checked={menstruating}
+              onChange={setMenstruating}
+              label="Tandai sedang haid"
+              className="pointer-events-none"
+            />
+          </button>
         </section>
 
         <section className="px-5 py-8 border-b-2 border-ink">

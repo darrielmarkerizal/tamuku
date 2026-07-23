@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { addDays, daysBetween, parseIsoDate, today } from "@/lib/date";
 import { calcCycleLength, isMenstruationActive } from "@/lib/period/sma";
+import { setMenstruationDay } from "@/lib/period/day-sync";
 import { currentTtdMode } from "@/lib/ttd/schedule";
 import { evaluateStreak } from "@/lib/streak/engine";
 import { pickNextForUser } from "@/lib/flashcards/pick";
@@ -43,6 +44,7 @@ const OpUnion = z.discriminatedUnion("type", [
     mood: z.string().nullable(),
     symptoms: z.array(z.string()).default([]),
     notes: z.string().max(280),
+    menstruating: z.boolean().default(false),
   }),
 ]);
 
@@ -342,6 +344,7 @@ async function runUpsertJournal(
     mood: string | null;
     symptoms: string[];
     notes: string;
+    menstruating: boolean;
   }
 ) {
   const logDate = parseIsoDate(op.logDateIso);
@@ -360,6 +363,11 @@ async function runUpsertJournal(
     create: { userId, log_date: logDate, mood, symptoms, notes },
     select: { id: true },
   });
+
+  try {
+    await setMenstruationDay(userId, logDate, op.menstruating, today());
+  } catch {}
+
   return { id: upserted.id };
 }
 

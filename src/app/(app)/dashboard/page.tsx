@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { addDays, daysBetween, formatShort, today } from "@/lib/date";
 import { isMenstruationActive } from "@/lib/period/sma";
-import { computeMascotState } from "@/lib/mascot-state";
+import { computeMascotStateFromJournal } from "@/lib/mascot-state";
 import { computeWeekProgress } from "@/lib/streak/week-progress";
 import { getCopy } from "@/lib/discreet";
 import {
@@ -33,28 +33,33 @@ export default async function DashboardPage() {
   const todayDate = today();
   const copy = getCopy(user.discreet_mode);
 
-  const [periods, ttdToday, ttdLogs14, ttdTotal, notif] = await Promise.all([
-    db.menstruationLog.findMany({
-      where: { userId: user.id },
-      select: { start_date: true, end_date: true },
-      orderBy: { start_date: "asc" },
-    }),
-    db.ttdLog.findUnique({
-      where: { userId_log_date: { userId: user.id, log_date: todayDate } },
-      select: { id: true },
-    }),
-    db.ttdLog.findMany({
-      where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
-      select: { log_date: true },
-    }),
-    db.ttdLog.count({ where: { userId: user.id } }),
-    db.notificationSetting.findUnique({
-      where: { userId: user.id },
-      select: { weekly_day: true },
-    }),
-  ]);
+  const [periods, ttdToday, ttdLogs14, ttdTotal, notif, recentJournals] =
+    await Promise.all([
+      db.menstruationLog.findMany({
+        where: { userId: user.id },
+        select: { start_date: true, end_date: true },
+        orderBy: { start_date: "asc" },
+      }),
+      db.ttdLog.findUnique({
+        where: { userId_log_date: { userId: user.id, log_date: todayDate } },
+        select: { id: true },
+      }),
+      db.ttdLog.findMany({
+        where: { userId: user.id, log_date: { gte: addDays(todayDate, -14) } },
+        select: { log_date: true },
+      }),
+      db.ttdLog.count({ where: { userId: user.id } }),
+      db.notificationSetting.findUnique({
+        where: { userId: user.id },
+        select: { weekly_day: true },
+      }),
+      db.journalLog.findMany({
+        where: { userId: user.id, log_date: { gte: addDays(todayDate, -2) } },
+        select: { log_date: true, mood: true },
+      }),
+    ]);
 
-  const mascotState = computeMascotState(ttdLogs14, periods, todayDate);
+  const mascotState = computeMascotStateFromJournal(recentJournals, todayDate);
 
   const activePeriod = periods
     .slice()
@@ -195,7 +200,7 @@ function TodayCard({
   eyebrow: string;
   headline: string;
   sub: string;
-  mascotState: ReturnType<typeof computeMascotState>;
+  mascotState: ReturnType<typeof computeMascotStateFromJournal>;
   accessory: MascotAccessory | null;
   lines: string[];
 }) {

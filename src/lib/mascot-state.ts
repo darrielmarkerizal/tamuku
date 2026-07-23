@@ -1,53 +1,31 @@
-import { addDays, toIsoDate } from "@/lib/date";
-import {
-  isMenstruationActive,
-  type PeriodEntry,
-} from "@/lib/period/sma";
+import { addDays } from "@/lib/date";
 import type { MascotState } from "@/components/mascot";
 
-interface TtdLog {
-  log_date: Date;
+export function moodToMascotState(mood: string | null | undefined): MascotState {
+  switch (mood) {
+    case "HAPPY":
+      return "vibrant";
+    case "CALM":
+      return "cheerful";
+    case "ANXIOUS":
+    case "TIRED":
+      return "tired";
+    case "SAD":
+    case "ANGRY":
+      return "pucat";
+    default:
+      return "cheerful";
+  }
 }
 
-export function computeMascotState(
-  ttdLogs14: TtdLog[],
-  periods: PeriodEntry[],
-  reference: Date
+export function computeMascotStateFromJournal(
+  journals: { log_date: Date; mood: string | null }[],
+  reference: Date,
+  windowDays = 3
 ): MascotState {
-  const loggedIso = new Set(ttdLogs14.map((l) => toIsoDate(l.log_date)));
-
-  let expected = 0;
-  let hit = 0;
-  const weeksSeen = new Set<string>();
-
-  for (let d = 13; d >= 0; d--) {
-    const date = addDays(reference, -d);
-    const iso = toIsoDate(date);
-    const menstruating = isMenstruationActive(periods, date);
-
-    if (menstruating) {
-      expected++;
-      if (loggedIso.has(iso)) hit++;
-    } else {
-      const wkKey = `${date.getUTCFullYear()}-${Math.floor(
-        date.getUTCDate() / 7
-      )}`;
-      if (!weeksSeen.has(wkKey)) {
-        expected++;
-        weeksSeen.add(wkKey);
-
-        const anyLog = Array.from({ length: 7 }).some((_, offset) => {
-          const dt = addDays(date, -offset);
-          return loggedIso.has(toIsoDate(dt));
-        });
-        if (anyLog) hit++;
-      }
-    }
-  }
-
-  const ratio = expected === 0 ? 0 : hit / expected;
-  if (ratio >= 0.9) return "vibrant";
-  if (ratio >= 0.7) return "cheerful";
-  if (ratio >= 0.4) return "tired";
-  return "pucat";
+  const cutoff = addDays(reference, -(windowDays - 1));
+  const latest = journals
+    .filter((j) => j.mood && j.log_date >= cutoff)
+    .sort((a, b) => b.log_date.getTime() - a.log_date.getTime())[0];
+  return moodToMascotState(latest?.mood ?? null);
 }

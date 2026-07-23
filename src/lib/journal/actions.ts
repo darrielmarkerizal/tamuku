@@ -5,7 +5,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
 import { evaluateBadgesForUser } from "@/lib/badges/evaluate";
-import { parseIsoDate } from "@/lib/date";
+import { setMenstruationDay } from "@/lib/period/day-sync";
+import { parseIsoDate, today } from "@/lib/date";
 import { Mood, Symptom } from "@/generated/prisma/enums";
 
 export type JournalActionResult =
@@ -41,6 +42,9 @@ export async function upsertJournalAction(
   const mood = parsed.data.mood ? (parsed.data.mood as Mood) : null;
   const symptoms = parsed.data.symptoms as Symptom[];
   const notes = parsed.data.notes || null;
+  const menstruating =
+    formData.get("menstruating") === "on" ||
+    formData.get("menstruating") === "true";
 
   await db.journalLog.upsert({
     where: {
@@ -55,6 +59,11 @@ export async function upsertJournalAction(
       notes,
     },
   });
+
+  try {
+    await setMenstruationDay(user.id, logDate, menstruating, today());
+    revalidatePath("/kalender");
+  } catch {}
 
   let newBadges: string[] = [];
   try {

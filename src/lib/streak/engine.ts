@@ -5,7 +5,7 @@ import {
   today,
   toIsoDate,
 } from "@/lib/date";
-import { isMenstruationActive, type PeriodEntry } from "@/lib/period/sma";
+import { type PeriodEntry } from "@/lib/period/sma";
 
 export interface TtdLogEntry {
   log_date: Date;
@@ -90,55 +90,16 @@ export function isWeekComplete(
   weeklyDay: number,
   reference: Date
 ): boolean {
+  void periods;
+  void weeklyDay;
+
   const refIso = toIsoDate(reference);
 
-  const daysInWeek: { date: Date; iso: string; menstruating: boolean }[] = [];
   for (let d = 0; d < 7; d++) {
-    const date = addDays(weekStart, d);
-    const iso = toIsoDate(date);
-
+    const iso = toIsoDate(addDays(weekStart, d));
     if (iso > refIso) continue;
-    daysInWeek.push({
-      date,
-      iso,
-      menstruating: isMenstruationActive(periods, date),
-    });
+    if (loggedDates?.has(iso)) return true;
   }
 
-  if (daysInWeek.length === 0) return false;
-
-  const menstruatingDays = daysInWeek.filter((d) => d.menstruating);
-  const nonMenstruatingDays = daysInWeek.filter((d) => !d.menstruating);
-
-  for (const d of menstruatingDays) {
-    if (!loggedDates?.has(d.iso)) return false;
-  }
-
-  if (nonMenstruatingDays.length > 0) {
-    const weeklyDayDate = addDays(weekStart, (weeklyDay + 6) % 7);
-
-    const monBasedIdx = (weeklyDay + 6) % 7;
-    const targetDate = addDays(weekStart, monBasedIdx);
-    const targetIso = toIsoDate(targetDate);
-
-    if (targetIso <= refIso) {
-      if (!loggedDates?.has(targetIso)) {
-        const anyNonMenstruatingLog = nonMenstruatingDays.some((d) =>
-          loggedDates?.has(d.iso)
-        );
-        if (!anyNonMenstruatingLog) return false;
-      }
-    } else {
-      const anyNonMenstruatingLog = nonMenstruatingDays.some((d) =>
-        loggedDates?.has(d.iso)
-      );
-      if (!anyNonMenstruatingLog && targetIso <= refIso) return false;
-
-      if (!anyNonMenstruatingLog) return false;
-      void targetDate;
-    }
-    void weeklyDayDate;
-  }
-
-  return true;
+  return false;
 }

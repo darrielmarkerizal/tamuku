@@ -66,7 +66,7 @@ export function EditProfileForm({ initial }: Props) {
             <Mascot state="vibrant" size={64} />
           </div>
           <p className="font-sans text-sm text-ink">
-            Maskot kamu berubah sesuai kepatuhan minum TTD.
+            Maskot kamu berubah sesuai mood jurnalmu.
           </p>
         </section>
 

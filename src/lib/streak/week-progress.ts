@@ -51,16 +51,14 @@ export function computeWeekProgress(
     };
   });
 
-  const nonMenstruating = raw.filter((d) => !d.menstruating);
-
-  const weeklySatisfied = nonMenstruating.some((d) => logged.has(d.iso));
   const weeklyDayIso = raw[(weeklyDay + 6) % 7]?.iso ?? null;
+  const weeklySatisfied = raw.some((d) => logged.has(d.iso));
 
   const days: WeekDay[] = raw.map((d) => {
     const isPast = d.iso < refIso;
     const isToday = d.iso === refIso;
-    const isWeeklySlot = d.iso === weeklyDayIso && nonMenstruating.length > 0;
-    const required = d.menstruating || (isWeeklySlot && !weeklySatisfied);
+    const isWeeklySlot = d.iso === weeklyDayIso;
+    const required = isWeeklySlot && !weeklySatisfied;
 
     let status: DayStatus;
     if (logged.has(d.iso)) status = "done";
@@ -72,17 +70,9 @@ export function computeWeekProgress(
     return { ...d, status };
   });
 
-  const menstruatingSoFar = raw.filter(
-    (d) => d.menstruating && d.iso <= refIso
-  );
   const weeklySlotDue = weeklyDayIso !== null && weeklyDayIso <= refIso;
-
-  const required =
-    menstruatingSoFar.length +
-    (nonMenstruating.length > 0 && weeklySlotDue ? 1 : 0);
-  const done =
-    menstruatingSoFar.filter((d) => logged.has(d.iso)).length +
-    (nonMenstruating.length > 0 && weeklySlotDue && weeklySatisfied ? 1 : 0);
+  const required = weeklySlotDue ? 1 : 0;
+  const done = weeklySatisfied ? 1 : 0;
 
   const remaining = days.filter(
     (d) => d.status === "due" || d.status === "upcoming"

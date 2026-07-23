@@ -20,7 +20,8 @@ import { requireUser } from "@/lib/auth/current-user";
 import { addDays, today } from "@/lib/date";
 import { BADGES } from "@/lib/badges/rules";
 import { buildSnapshot } from "@/lib/badges/snapshot";
-import { computeMascotState } from "@/lib/mascot-state";
+import { db } from "@/lib/db";
+import { computeMascotStateFromJournal } from "@/lib/mascot-state";
 import type { MascotAccessory } from "@/components/mascot";
 import { LogoutButton } from "./logout-button";
 
@@ -48,28 +49,33 @@ const SETTINGS: Setting[] = [
 export default async function ProfilPage() {
   const user = await requireUser();
   const todayDate = today();
-  const cutoff30 = addDays(todayDate, -30);
-
-  const cutoff14 = addDays(todayDate, -14);
-
-  const snapshot = await buildSnapshot(user.id);
+  const [snapshot, recentJournals] = await Promise.all([
+    buildSnapshot(user.id),
+    db.journalLog.findMany({
+      where: { userId: user.id, log_date: { gte: addDays(todayDate, -2) } },
+      select: { log_date: true, mood: true },
+    }),
+  ]);
   const ttdLogs = snapshot?.ttdLogs ?? [];
   const periods = snapshot?.periods ?? [];
 
-  const ttdLogs30 = ttdLogs.filter((l) => l.log_date >= cutoff30).length;
-  const ttdLogs14 = ttdLogs.filter((l) => l.log_date >= cutoff14);
   const periodsClosed = periods.filter((p) => p.end_date !== null).length;
 
-  const complianceTarget = 30;
-  const compliancePct = Math.min(
-    100,
-    Math.round((ttdLogs30 / complianceTarget) * 100)
-  );
-  const mascotState = computeMascotState(ttdLogs14, periods, todayDate);
+  const complianceWeeks = 4;
+  let weeksHit = 0;
+  for (let w = 0; w < complianceWeeks; w++) {
+    const end = addDays(todayDate, -w * 7);
+    const start = addDays(end, -6);
+    if (ttdLogs.some((l) => l.log_date >= start && l.log_date <= end)) {
+      weeksHit++;
+    }
+  }
+  const compliancePct = Math.round((weeksHit / complianceWeeks) * 100);
+  const mascotState = computeMascotStateFromJournal(recentJournals, todayDate);
 
   const stats: Stat[] = [
     { Icon: Flame, value: String(user.streak_current), label: "MINGGU STREAK" },
-    { Icon: CheckCircle2, value: `${compliancePct}%`, label: "KEPATUHAN 30H" },
+    { Icon: CheckCircle2, value: `${compliancePct}%`, label: "KEPATUHAN 4 MINGGU" },
     { Icon: CalendarDays, value: String(periodsClosed), label: "SIKLUS DICATAT" },
   ];
   const schoolLine = [user.school, user.class_name ? `Kelas ${user.class_name}` : null]

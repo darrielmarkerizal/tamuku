@@ -105,11 +105,11 @@ export const BADGES: BadgeMeta[] = [
   {
     slug: "rutin_sebulan",
     name: "RUTIN SEBULAN",
-    description: "8 TTD tercatat dalam 30 hari terakhir.",
+    description: "4 TTD tercatat dalam 30 hari terakhir.",
     Icon: CalendarCheck,
     bg: "bg-accent-mint",
     iconColor: "text-success",
-    target: 8,
+    target: 4,
     unit: "TTD",
     progress: (s) => {
       const cutoff = addDays(today(), -30);

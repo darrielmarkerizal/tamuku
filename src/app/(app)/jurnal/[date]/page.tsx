@@ -29,12 +29,22 @@ export default async function JurnalDatePage({ params, searchParams }: Props) {
     redirect(`/jurnal/${toIsoDate(todayDate)}`);
   }
 
-  const existing = await db.journalLog.findUnique({
-    where: {
-      userId_log_date: { userId: user.id, log_date: logDate },
-    },
-    select: { mood: true, symptoms: true, notes: true },
-  });
+  const [existing, periodCover] = await Promise.all([
+    db.journalLog.findUnique({
+      where: {
+        userId_log_date: { userId: user.id, log_date: logDate },
+      },
+      select: { mood: true, symptoms: true, notes: true },
+    }),
+    db.menstruationLog.findFirst({
+      where: {
+        userId: user.id,
+        start_date: { lte: logDate },
+        OR: [{ end_date: { gte: logDate } }, { end_date: null }],
+      },
+      select: { id: true },
+    }),
+  ]);
 
   const prefillMood = sp.mood
     ? MOOD_BY_SLUG[sp.mood.toLowerCase()]
@@ -49,6 +59,7 @@ export default async function JurnalDatePage({ params, searchParams }: Props) {
       initialMood={existing?.mood ?? prefillMood ?? null}
       initialSymptoms={existing?.symptoms ?? []}
       initialNote={existing?.notes ?? ""}
+      initialMenstruating={!!periodCover}
       backHref="/jurnal"
     />
   );
